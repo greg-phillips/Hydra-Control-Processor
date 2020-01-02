@@ -1,0 +1,12 @@
+leds.c:98:6:led_init	8	static
+leds.c:113:6:update_led_bar	8	static
+leds.c:122:6:process_led_display	8	static
+leds.c:132:6:set_led_bar	40	static
+leds.c:141:6:set_led_bar_raw	24	static
+leds.c:162:6:init_led_bar	8	static
+leds.c:176:6:led_bar_setup	40	static
+leds.c:233:6:led_bar_wifi_setup_mode	8	static
+leds.c:242:6:led_bar_scan_mode	48	static
+leds.c:359:6:led_bar_off	8	static
+leds.c:373:6:generate_led_pwm	40	static
+leds.c:418:6:led_bar_test	16	static
