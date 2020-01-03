@@ -78,4 +78,5 @@ void system_init(void)
 	 * Initialize each of the sub systems
 	 */
 	led_init();
+	init_led_bar();
 }

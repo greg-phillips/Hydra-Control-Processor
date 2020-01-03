@@ -35,6 +35,8 @@
 #include <stdio.h>
 #include <memory.h>
 
+#include "stm32g0xx_hal.h"
+
 #include "system.h"
 #include "structs.h"
 #include "ck_time.h"
@@ -54,7 +56,7 @@
 #define NO_PWM_BYTES            ( ( LED_BAR_NO_LEDS * LEDS_NO_LEDS * BITS_OF_PWM * ENCODING_FACTOR ) / 8 )
 #define WIFI_SETUP_LED_TIME     ( 100 )
 #define NO_TRANSISTION_STEPS    ( 10 )
-#define WS2812B_RESET_TIME      ( 50 )
+#define WS2812B_RESET_TIME      ( 50 )		// Number of characters to generate 50uS Low
 #define LEDS_NO_LEDS			( 3 )
 
 /******************************************************
@@ -67,7 +69,7 @@
 typedef struct {
     uint8_t bit_mask;
     uint16_t pin_mask;
-    uint8_t pwm_output[ NO_PWM_BYTES ];
+    uint8_t pwm_output[ NO_PWM_BYTES + WS2812B_RESET_TIME ];
     int16_t pwm_index;
     unsigned int leds_updated;
 } led_display_t;
@@ -79,14 +81,16 @@ typedef struct {
 /******************************************************
  *               Function Declarations
  ******************************************************/
-
+void led_bar_test(void);
 /******************************************************
  *               Variable Definitions
  ******************************************************/
-bool LED_display_update_completed;
-static volatile led_display_t ld;
+bool volatile LED_display_update_completed;
+static volatile led_display_t ld = { 0 };
 uint16_t led_display[ LED_BAR_NO_LEDS ][ LEDS_NO_LEDS ];
 extern hydra_status_t hs;
+extern SPI_HandleTypeDef hspi2;
+
 /******************************************************
  *               Function Definitions
  ******************************************************/
@@ -112,7 +116,19 @@ void led_init(void)
   */
 void update_led_bar(void)
 {
-
+	/*
+	 * Take the data that has been prepared using generate pwm and output over SPI 2
+	 */
+	LED_display_update_completed = false;
+	/*
+	 * Initiate Transfer
+	 */
+	HAL_SPI_Transmit_DMA( &hspi2, (uint8_t *) ld.pwm_output, NO_PWM_BYTES );
+	/*
+	 * Wait for it to complete - Later make this checked in main loop for LED management to speed operations up
+	 */
+	while( LED_display_update_completed == false )
+		;
 }
 /**
   * @brief	Process the LED Display
@@ -121,7 +137,10 @@ void update_led_bar(void)
   */
 void process_led_display(void)
 {
+	uint32_t current_time;
+	current_time = HAL_GetTick();
 
+	led_bar_test();
 }
 
 /**
@@ -384,6 +403,8 @@ void generate_led_pwm(void)
 
     /*
      * Output PWM Bits are sent for the last LED first and each of the 24 bits are sent in order of G R B bit order 7-0
+     *
+     * The Array contains additional byte to generate reload of data
      */
     memset( (void *) &ld.pwm_output, 0x00, sizeof( ld.pwm_output ) );
     index = NO_PWM_BYTES - 1;   // Start at end and back fill
@@ -434,12 +455,11 @@ void led_bar_test(void)
 //                printf( "Blue\r\n" );
             }
         }
-        if( color >= LED_BAR_NO_LEDS )
+        color += 1;
+        if( color >= LEDS_NO_LEDS )
             color = 0;
-        else
-            color += 1;
         update_led_bar();
-//        wiced_rtos_delay_milliseconds( 2000 );
+        HAL_Delay( 2000 );
     }
 }
 

@@ -470,7 +470,8 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
   else if(huart->Instance==USART2)
   {
   /* USER CODE BEGIN USART2_MspDeInit 0 */
-
+	    __HAL_RCC_USART2_FORCE_RESET();
+	    __HAL_RCC_USART2_RELEASE_RESET();
   /* USER CODE END USART2_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_USART2_CLK_DISABLE();
