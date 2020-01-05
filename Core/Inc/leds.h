@@ -60,9 +60,9 @@
  *               Function Definitions
  ******************************************************/
 void led_init(void);
-void process_led_display(void);
+void process_led_display( uint32_t current_time );
 void update_led_bar(void);
-void set_led_bar( uint8_t led, float red_level, float green_level, float blue_level );
+void set_led_bar( uint8_t led, uint16_t red, uint16_t green, uint16_t blue );
 void set_led_bar_raw( uint8_t led, uint16_t red_level, uint16_t green_level, uint16_t blue_level );
 void init_led_bar(void);
 void led_bar_off(void);

@@ -96,7 +96,7 @@ hydra_status_t hs;
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	uint32_t current_time;
   /* USER CODE END 1 */
   
 
@@ -128,7 +128,7 @@ int main(void)
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
   printf( "Hydra Management Processor Running\r\n" );
-
+  system_init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -138,12 +138,14 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+		current_time = HAL_GetTick();
+
 	  /*
 	   * Operate each module as a state machine so that they can perform different small tasks each time
 	   */
 	  // process_wifi_module();
 	  // process_i2c();
-	  process_led_display();
+	  process_led_display( current_time );
 	  // process_switch();
   }
   /* USER CODE END 3 */
@@ -437,8 +439,8 @@ static void MX_SPI2_Init(void)
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi2.Init.NSS = SPI_NSS_SOFT;
-  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_64;
-  hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
+  hspi2.Init.FirstBit = SPI_FIRSTBIT_LSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
   hspi2.Init.CRCPolynomial = 7;

@@ -52,8 +52,8 @@
  *                   Enumerations
  ******************************************************/
 enum {
-    EV_LED_RED,
     EV_LED_GREEN,
+    EV_LED_RED,
     EV_LED_BLUE,
     LEDS_NO_LEDS,
 };

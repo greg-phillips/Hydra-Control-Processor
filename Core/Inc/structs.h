@@ -83,14 +83,12 @@ typedef enum {
     HD_SHOW_HEALTH,
 }  hydra_display_t;
 
-typedef uint16_t display_state_levels_t[ NO_DISPLAY_STATES ][ LED_BAR_NO_LEDS ][ LEDS_NO_LEDS ];
+typedef uint16_t display_state_levels_t[ LED_BAR_NO_LEDS ][ LEDS_NO_LEDS ];
 
 typedef enum {
     LED_BAR_INIT,
     LED_BAR_SCAN_LEFT,
-    LED_BAR_TRANISTION_LEFT,
     LED_BAR_SCAN_RIGHT,
-    LED_BAR_TRANISTION_RIGHT,
 } led_bar_states_t;
 
 typedef struct hydra_status {
