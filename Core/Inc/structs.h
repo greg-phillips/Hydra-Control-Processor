@@ -99,6 +99,8 @@ typedef struct hydra_status {
 	uint32_t transistion_time;
 	led_bar_states_t led_bar_state;
     uint32_t led_bar_last_update;
+    uint16_t loop_count;
+    uint16_t max_loop_count;
     /*
      * User Input State machine
      */

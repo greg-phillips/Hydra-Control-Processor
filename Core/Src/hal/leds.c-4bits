@@ -53,14 +53,12 @@
 #define BITS_OF_PWM             ( 8 )
 #define MAX_LEVEL               ( 255 )
 #define ENCODING_FACTOR         ( 4 )
-#define NO_PWM_WORDS            ( LED_BAR_NO_LEDS * LEDS_NO_LEDS * 8 )
+#define NO_PWM_WORDS            ( LED_BAR_NO_LEDS * LEDS_NO_LEDS )
 #define WIFI_SETUP_LED_TIME     ( 100 )
 #define NO_TRANSISTION_STEPS    ( 10 )
-#define WS2812B_RESET_TIME      ( 20 )		// Number of characters to generate 50uS Low
+#define WS2812B_RESET_TIME      ( 60 )		// Number of characters to generate 50uS Low
 #define LEDS_NO_LEDS			( 3 )
-#define DEFAULT_LOOP_COUNT		( 4 )
-#define MIN_BREATH_LEVEL		( 50 )
-#define NO_BREATH_STEPS			( 200 )
+
 /******************************************************
  *                   Enumerations
  ******************************************************/
@@ -92,35 +90,7 @@ static volatile led_display_t ld = { 0 };
 uint16_t led_display[ LED_BAR_NO_LEDS ][ LEDS_NO_LEDS ];
 extern hydra_status_t hs;
 extern SPI_HandleTypeDef hspi2;
-display_state_levels_t display_state_levels;
-const unsigned char cie[256] = {
-	0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
-	1, 1, 1, 1, 2, 2, 2, 2, 2, 2,
-	2, 2, 2, 3, 3, 3, 3, 3, 3, 3,
-	3, 4, 4, 4, 4, 4, 4, 5, 5, 5,
-	5, 5, 6, 6, 6, 6, 6, 7, 7, 7,
-	7, 8, 8, 8, 8, 9, 9, 9, 10, 10,
-	10, 10, 11, 11, 11, 12, 12, 12, 13, 13,
-	13, 14, 14, 15, 15, 15, 16, 16, 17, 17,
-	17, 18, 18, 19, 19, 20, 20, 21, 21, 22,
-	22, 23, 23, 24, 24, 25, 25, 26, 26, 27,
-	28, 28, 29, 29, 30, 31, 31, 32, 32, 33,
-	34, 34, 35, 36, 37, 37, 38, 39, 39, 40,
-	41, 42, 43, 43, 44, 45, 46, 47, 47, 48,
-	49, 50, 51, 52, 53, 54, 54, 55, 56, 57,
-	58, 59, 60, 61, 62, 63, 64, 65, 66, 67,
-	68, 70, 71, 72, 73, 74, 75, 76, 77, 79,
-	80, 81, 82, 83, 85, 86, 87, 88, 90, 91,
-	92, 94, 95, 96, 98, 99, 100, 102, 103, 105,
-	106, 108, 109, 110, 112, 113, 115, 116, 118, 120,
-	121, 123, 124, 126, 128, 129, 131, 132, 134, 136,
-	138, 139, 141, 143, 145, 146, 148, 150, 152, 154,
-	155, 157, 159, 161, 163, 165, 167, 169, 171, 173,
-	175, 177, 179, 181, 183, 185, 187, 189, 191, 193,
-	196, 198, 200, 202, 204, 207, 209, 211, 214, 216,
-	218, 220, 223, 225, 228, 230, 232, 235, 237, 240,
-	242, 245, 247, 250, 252, 255,
-};
+
 /******************************************************
  *               Function Definitions
  ******************************************************/
@@ -138,7 +108,7 @@ void led_init(void)
 	hs.led_bar_state = LED_BAR_INIT;
     hs.ev_display_scan_mode = true;
     hs.led_bar_display_status = true;
-    led_bar_breath_setup( green_blend_scan[ 0 ], green_blend_scan[ 1 ], green_blend_scan[ 2 ], 20 );
+    led_bar_setup( blue_scan[ 0 ], blue_scan[ 1 ], blue_scan[ 2 ], 1000 );
 }
 /**
   * @brief	Process the LED Display
@@ -147,8 +117,8 @@ void led_init(void)
   */
 void process_led_display( uint32_t current_time )
 {
-//	led_bar_test();
-	led_bar_breath_mode( current_time );
+	led_bar_test();
+//	led_bar_scan_mode( current_time );
 }
 
 /**
@@ -180,17 +150,10 @@ void set_led_bar_raw( uint8_t led, uint16_t raw_red_level, uint16_t raw_green_le
      *
      * Color values and scale
      */
-	if( raw_red_level > 255 )
-		raw_red_level = 255;
-	if( raw_green_level > 255 )
-		raw_green_level = 255;
-	if( raw_blue_level > 255 )
-		raw_blue_level = 255;
-
     if( led < LED_BAR_NO_LEDS ) {
-        led_display[ led ][ EV_LED_RED ] =  cie[ raw_red_level ];		// (uint8_t) (float) ( raw_red_level * ( 4.0 * ( 255 / 1020 ) ) );
-        led_display[ led ][ EV_LED_GREEN ] =  cie[ raw_green_level ];	// (uint8_t) (float) ( raw_green_level * ( 3.0 * ( 255 / 1020 ) ) );
-        led_display[ led ][ EV_LED_BLUE ] =  cie[ raw_blue_level ];	// (uint8_t) (float) ( raw_blue_level * ( 1.0 * ( 255 / 1020 ) ) );
+        led_display[ led ][ EV_LED_RED ] =  raw_red_level;		// (uint8_t) (float) ( raw_red_level * ( 4.0 * ( 255 / 1020 ) ) );
+        led_display[ led ][ EV_LED_GREEN ] =  raw_green_level;	// (uint8_t) (float) ( raw_green_level * ( 3.0 * ( 255 / 1020 ) ) );
+        led_display[ led ][ EV_LED_BLUE ] =  raw_blue_level;	// (uint8_t) (float) ( raw_blue_level * ( 1.0 * ( 255 / 1020 ) ) );
     }
 }
 /**
@@ -203,36 +166,16 @@ void init_led_bar(void)
     led_bar_off();
 }
 /**
-  * @brief led_bar_scan_setup
+  * @brief led_bar_setup
   * @param  None
   * @retval : None
   */
-void led_bar_breath_setup( uint16_t red, uint16_t green, uint16_t blue, uint16_t transision_period )
-{
-    /*
-     * Set Max levels
-     */
-	display_state_levels[ 0 ][ EV_LED_RED ] = red;
-	display_state_levels[ 0 ][ EV_LED_GREEN ] = green;
-	display_state_levels[ 0 ][ EV_LED_BLUE ] = blue;
-
-    hs.tansistion_time = transision_period;
-    hs.led_bar_state = LED_BAR_INIT;
-    hs.ev_display_scan_mode = true;
-    hs.led_bar_display_status = true;
-    led_bar_off();
-    hs.max_loop_count = 1;
-}
-/**
-  * @brief led_bar_scan_setup
-  * @param  None
-  * @retval : None
-  */
+display_state_levels_t display_state_levels;
 #define EVD_MAX     1.00
 #define EVD_HIGH    0.70
 #define EVD_MED     0.40
 #define EVD_LOW     0.10
-void led_bar_scan_setup( uint16_t red, uint16_t green, uint16_t blue, uint16_t transision_period )
+void led_bar_setup( uint16_t red, uint16_t green, uint16_t blue, uint16_t transision_period )
 {
 
     uint16_t i;
@@ -276,7 +219,6 @@ void led_bar_scan_setup( uint16_t red, uint16_t green, uint16_t blue, uint16_t t
     hs.ev_display_scan_mode = true;
     hs.led_bar_display_status = true;
     led_bar_off();
-    hs.max_loop_count = DEFAULT_LOOP_COUNT;
 }
 /**
   * @brief Show a display for Wi-Fi Setup
@@ -285,14 +227,14 @@ void led_bar_scan_setup( uint16_t red, uint16_t green, uint16_t blue, uint16_t t
   */
 void led_bar_wifi_setup_mode(void)
 {
-    led_bar_scan_setup( green_blend_scan[ EV_LED_RED ], green_blend_scan[ EV_LED_GREEN ], green_blend_scan[ EV_LED_BLUE ], 50 );
+    led_bar_setup( green_blend_scan[ EV_LED_RED ], green_blend_scan[ EV_LED_GREEN ], green_blend_scan[ EV_LED_BLUE ], 50 );
 }
 /**
-  * @brief Do the LED BAR Scanning function right
+  * @brief Do the LED BAR Scanning function
   * @param  None
   * @retval : None
   */
-void led_bar_scan_mode_right( uint32_t current_time )
+void led_bar_scan_mode( uint32_t current_time )
 {
 	int16_t i;
     uint16_t index;
@@ -305,53 +247,6 @@ void led_bar_scan_mode_right( uint32_t current_time )
             hs.led_bar_display_state = 0;
             hs.led_bar_last_update = current_time;
             led_bar_off();      // Start in known state
-            hs.led_bar_state = LED_BAR_SCAN_RIGHT;
-            break;
-        case LED_BAR_SCAN_RIGHT :
-            if( imx_is_later( current_time, hs.led_bar_last_update + hs.tansistion_time ) ) {
-                for( i = 0; i < LED_BAR_NO_LEDS; i++ ) {
-                	index = hs.led_bar_display_state + i;
-                	if( index >= LED_BAR_NO_LEDS )
-                		index = index - LED_BAR_NO_LEDS;	// Wrap around
-                	set_led_bar_raw( i, display_state_levels[ index ][ EV_LED_RED ],
-                			display_state_levels[ index ][ EV_LED_GREEN ],
-							display_state_levels[ index ][ EV_LED_BLUE ] );
-                }
-                update_led_bar();
-                hs.led_bar_last_update = current_time;
-                /*
-                 * Check if we have done a full lap
-                 */
-                if( hs.led_bar_display_state == 0 ) {
-                	hs.led_bar_display_state = LED_BAR_NO_LEDS - 1;
-                } else {
-                    hs.led_bar_display_state -= 1;
-                }
-            }
-            break;
-        default :
-        	hs.led_bar_state = LED_BAR_INIT;
-    }
-}
-/**
-  * @brief Do the LED BAR Scanning function left
-  * @param  None
-  * @retval : None
-  */
-void led_bar_scan_mode_left( uint32_t current_time )
-{
-	int16_t i;
-    uint16_t index;
-
-    /*
-     * Show a Wi Fi Setup display
-     */
-    switch( hs.led_bar_state ) {
-        case LED_BAR_INIT :
-            hs.led_bar_display_state = 0;
-            hs.led_bar_last_update = current_time;
-            led_bar_off();      // Start in known state
-            hs.loop_count = 0;
             hs.led_bar_state = LED_BAR_SCAN_LEFT;
             break;
         case LED_BAR_SCAN_LEFT :
@@ -371,67 +266,14 @@ void led_bar_scan_mode_left( uint32_t current_time )
                  * Check if we have done a full lap
                  */
                 if( hs.led_bar_display_state >= LED_BAR_NO_LEDS ) {
-                	hs.led_bar_display_state = 0;	// Do it again
-                }
-            }
-            break;
-        default :
-        	hs.led_bar_state = LED_BAR_INIT;
-            break;
-    }
-}
-/**
-  * @brief Do the LED BAR Scanning alternate forward / backwards function 2 X
-  * @param  None
-  * @retval : None
-  */
-void led_bar_scan_mode_dual( uint32_t current_time )
-{
-	int16_t i;
-    uint16_t index;
-
-    /*
-     * Show a Wi Fi Setup display
-     */
-    switch( hs.led_bar_state ) {
-        case LED_BAR_INIT :
-            hs.led_bar_display_state = 0;
-            hs.led_bar_last_update = current_time;
-            led_bar_off();      // Start in known state
-            hs.loop_count = 0;
-            hs.led_bar_state = LED_BAR_SCAN_LEFT;
-            break;
-        case LED_BAR_SCAN_LEFT :
-            if( imx_is_later( current_time, hs.led_bar_last_update + hs.tansistion_time ) ) {
-                for( i = 0; i < LED_BAR_NO_LEDS; i++ ) {
-                	index = hs.led_bar_display_state + i;
-                	if( index >= LED_BAR_NO_LEDS )
-                		index = index - LED_BAR_NO_LEDS;	// Wrap around
-                	set_led_bar_raw( i, display_state_levels[ index ][ EV_LED_RED ],
-                			display_state_levels[ index ][ EV_LED_GREEN ],
-							display_state_levels[ index ][ EV_LED_BLUE ]);
-                }
-                update_led_bar();
-                hs.led_bar_last_update = current_time;
-                hs.led_bar_display_state += 1;
-                /*
-                 * Check if we have done a full lap
-                 */
-                if( hs.led_bar_display_state >= LED_BAR_NO_LEDS ) {
-                	hs.loop_count += 1;
-                	if( hs.loop_count >= hs.max_loop_count ) {
-                        hs.led_bar_display_state = LED_BAR_NO_LEDS - 1;
-                        hs.loop_count = 0;
-                        hs.led_bar_state = LED_BAR_SCAN_RIGHT;
-                	} else {
-                		hs.led_bar_display_state = 0;	// Do it again
-                	}
+                    hs.led_bar_display_state = 0;
+                    hs.led_bar_state = LED_BAR_SCAN_RIGHT;
                 }
             }
             break;
         case LED_BAR_SCAN_RIGHT :
             if( imx_is_later( current_time, hs.led_bar_last_update + hs.tansistion_time ) ) {
-                for( i = 0; i < LED_BAR_NO_LEDS; i++ ) {
+                for( i = ( LED_BAR_NO_LEDS - 1 ); i > 0; i-- ) {
                 	index = hs.led_bar_display_state + i;
                 	if( index >= LED_BAR_NO_LEDS )
                 		index = index - LED_BAR_NO_LEDS;	// Wrap around
@@ -441,88 +283,15 @@ void led_bar_scan_mode_dual( uint32_t current_time )
                 }
                 update_led_bar();
                 hs.led_bar_last_update = current_time;
-                /*
-                 * Check if we have done a full lap
-                 */
-                if( hs.led_bar_display_state == 0 ) {
-                	hs.loop_count += 1;
-                	if( hs.loop_count >= hs.max_loop_count ) {
-                		hs.led_bar_state = LED_BAR_SCAN_LEFT;
-                		hs.loop_count = 0;
-                	} else {
-                		hs.led_bar_display_state = LED_BAR_NO_LEDS - 1;	// Do it again
-                	}
-                } else {
-                    hs.led_bar_display_state -= 1;
-                }
-            }
-            break;
-        default :
-        	hs.led_bar_state = LED_BAR_INIT;
-            break;
-    }
-}
-/**
-  * @brief Do the LED BAR Scanning alternate forward / backwards function 2 X
-  * @param  None
-  * @retval : None
-  */
-void led_bar_breath_mode( uint32_t current_time )
-{
-	int16_t i;
-	float factor;
-    /*
-     * Show a Wi Fi Setup display
-     */
-    switch( hs.led_bar_state ) {
-        case LED_BAR_INIT :
-            hs.led_bar_display_state = MIN_BREATH_LEVEL;
-            hs.led_bar_last_update = current_time;
-            led_bar_off();      // Start in known state
-            hs.led_bar_state = LED_BAR_SCAN_LEFT;
-            break;
-        case LED_BAR_SCAN_LEFT :
-            if( imx_is_later( current_time, hs.led_bar_last_update + hs.tansistion_time ) ) {
-                for( i = 0; i < LED_BAR_NO_LEDS; i++ ) {
-                	factor = (float)( hs.led_bar_display_state ) / (float) (NO_BREATH_STEPS);
-                	set_led_bar_raw( i, (uint16_t) ( (float)display_state_levels[ 0 ][ EV_LED_RED ] * factor ),
-                			(uint16_t) ( (float) display_state_levels[ 0 ][ EV_LED_GREEN ] * factor ),
-							(uint16_t) ( (float) display_state_levels[ 0 ][ EV_LED_BLUE ] * factor ) );
-                }
-                update_led_bar();
-                hs.led_bar_last_update = current_time;
                 hs.led_bar_display_state += 1;
                 /*
                  * Check if we have done a full lap
                  */
-                if( hs.led_bar_display_state >= NO_BREATH_STEPS ) {
-                	hs.led_bar_display_state = NO_BREATH_STEPS - 1;
-                	hs.led_bar_state = LED_BAR_SCAN_RIGHT;
+                if( hs.led_bar_display_state >= LED_BAR_NO_LEDS ) {
+                    hs.led_bar_display_state = 0;
+                    hs.led_bar_state = LED_BAR_SCAN_LEFT;
                 }
             }
-            break;
-        case LED_BAR_SCAN_RIGHT :
-            if( imx_is_later( current_time, hs.led_bar_last_update + hs.tansistion_time ) ) {
-                for( i = 0; i < LED_BAR_NO_LEDS; i++ ) {
-                	factor = (float)( hs.led_bar_display_state ) / (float) (NO_BREATH_STEPS);
-                	set_led_bar_raw( i, (uint16_t) ( (float)display_state_levels[ 0 ][ EV_LED_RED ] * factor ),
-                			(uint16_t) ( (float) display_state_levels[ 0 ][ EV_LED_GREEN ] * factor ),
-							(uint16_t) ( (float) display_state_levels[ 0 ][ EV_LED_BLUE ] * factor ) );
-                }
-                update_led_bar();
-                hs.led_bar_last_update = current_time;
-                /*
-                 * Check if we have done a full lap
-                 */
-                if( hs.led_bar_display_state == MIN_BREATH_LEVEL ) {
-                	hs.led_bar_state = LED_BAR_SCAN_LEFT;
-                } else {
-                    hs.led_bar_display_state -= 1;
-                }
-            }
-            break;
-        default :
-        	hs.led_bar_state = LED_BAR_INIT;
             break;
     }
 }
@@ -538,12 +307,10 @@ void led_bar_off(void)
 }/*
 #define NZR_0   0x1     // 1 0 0 - reversed = 0 0 1
 #define NZR_1   0x3     // 1 1 0 - reversed = 0 1 1
-
+*/
 #define NZR_0   0x8     // 1 0 0 0
 #define NZR_1   0xE     // 1 1 1 0
-*/
-#define NZR_0   0b11111111110000000000000000000000
-#define NZR_1   0b11111111111111111111000000000000
+
 /**
   * @brief Generate the PWM levels based on lux level
   * @param  None
@@ -553,12 +320,13 @@ void generate_led_pwm(void)
 {
     uint8_t led_level, mask;
     int16_t i, j, index;
+    uint32_t output_value;
     float lux_scale;
 
     if( hs.valid_lux_level == true ) {
-        lux_scale = 0.5;        // determine correct levels later - use a calculation
+        lux_scale = 1.0;        // determine correct levels later - use a calculation
     } else
-        lux_scale = 0.5;
+        lux_scale = 1.0;
 
     /*
      * Output PWM Bits are sent for the last LED first and each of the 24 bits are sent in order of G R B bit order 7-0
@@ -570,13 +338,18 @@ void generate_led_pwm(void)
     for( i = 0; i < LED_BAR_NO_LEDS;  i++ ) {
         for( j = 0; j < LEDS_NO_LEDS; j++ ) {
             led_level = (uint8_t) ( lux_scale * (float) led_display[ i ][ j ] );
+//            printf( "LED Display[ %u ][ %u ] = 0x%02x\r\n", i, j, (uint16_t) pwm_output[ i ] );
+            output_value = 0;
             for( mask = 0x80; mask != 0 ; mask >>= 1 ) {
+            	output_value <<= 4;
                 if( ( led_level & mask ) == 0x00 ) {
-                    ld.pwm_output[ index++ ] = NZR_0;
+                	output_value |= (uint32_t) ( NZR_0 );
                 } else {
-                    ld.pwm_output[ index++ ] = NZR_1;
+                	output_value |= (uint32_t) ( NZR_1 );
                 }
             }
+//            printf( "Index: %u\r\n", index );
+            ld.pwm_output[ index++ ] = output_value;
         }
     }
 }

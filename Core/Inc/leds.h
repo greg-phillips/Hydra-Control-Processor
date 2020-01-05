@@ -66,9 +66,13 @@ void set_led_bar( uint8_t led, uint16_t red, uint16_t green, uint16_t blue );
 void set_led_bar_raw( uint8_t led, uint16_t red_level, uint16_t green_level, uint16_t blue_level );
 void init_led_bar(void);
 void led_bar_off(void);
-void led_bar_setup( uint16_t red, uint16_t green, uint16_t blue, uint16_t transision_period );
+void led_bar_scan_setup( uint16_t red, uint16_t green, uint16_t blue, uint16_t transision_period );
+void led_bar_breath_setup( uint16_t red, uint16_t green, uint16_t blue, uint16_t transision_period );
 void led_bar_wifi_setup_mode(void);
-void led_bar_scan_mode( uint32_t current_time );
+void led_bar_scan_mode_right( uint32_t current_time );
+void led_bar_scan_mode_left( uint32_t current_time );
+void led_bar_scan_mode_dual( uint32_t current_time );
+void led_bar_breath_mode( uint32_t current_time );
 void update_led_bar(void);
 void generate_led_pwm(void);
 
