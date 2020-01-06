@@ -68,6 +68,7 @@ void init_led_bar(void);
 void led_bar_off(void);
 void led_bar_scan_setup( uint16_t red, uint16_t green, uint16_t blue, uint16_t transision_period );
 void led_bar_breath_setup( uint16_t red, uint16_t green, uint16_t blue, uint16_t transision_period );
+void led_bar_working_setup( uint16_t red, uint16_t green, uint16_t blue, uint16_t transision_period );
 void led_bar_wifi_setup_mode(void);
 void led_bar_scan_mode_right( uint32_t current_time );
 void led_bar_scan_mode_left( uint32_t current_time );

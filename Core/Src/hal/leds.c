@@ -138,7 +138,7 @@ void led_init(void)
 	hs.led_bar_state = LED_BAR_INIT;
     hs.ev_display_scan_mode = true;
     hs.led_bar_display_status = true;
-    led_bar_breath_setup( green_blend_scan[ 0 ], green_blend_scan[ 1 ], green_blend_scan[ 2 ], 20 );
+    led_bar_working_setup( green_blend_scan[ 0 ], green_blend_scan[ 1 ], green_blend_scan[ 2 ], 250 );
 }
 /**
   * @brief	Process the LED Display
@@ -148,7 +148,7 @@ void led_init(void)
 void process_led_display( uint32_t current_time )
 {
 //	led_bar_test();
-	led_bar_breath_mode( current_time );
+	led_bar_scan_mode_left( current_time );
 }
 
 /**
@@ -231,7 +231,7 @@ void led_bar_breath_setup( uint16_t red, uint16_t green, uint16_t blue, uint16_t
 #define EVD_MAX     1.00
 #define EVD_HIGH    0.70
 #define EVD_MED     0.40
-#define EVD_LOW     0.10
+#define EVD_LOW     0.20
 void led_bar_scan_setup( uint16_t red, uint16_t green, uint16_t blue, uint16_t transision_period )
 {
 
@@ -270,6 +270,56 @@ void led_bar_scan_setup( uint16_t red, uint16_t green, uint16_t blue, uint16_t t
     display_state_levels[ 8 ][ EV_LED_RED ] = (uint16_t) ( (float) red * EVD_MED );
     display_state_levels[ 8 ][ EV_LED_GREEN ] = (uint16_t) ( (float) green * EVD_MED );
     display_state_levels[ 8 ][ EV_LED_BLUE ] = (uint16_t) ( (float) blue * EVD_MED );
+
+    hs.tansistion_time = transision_period;
+    hs.led_bar_state = LED_BAR_INIT;
+    hs.ev_display_scan_mode = true;
+    hs.led_bar_display_status = true;
+    led_bar_off();
+    hs.max_loop_count = DEFAULT_LOOP_COUNT;
+}
+void led_bar_working_setup( uint16_t red, uint16_t green, uint16_t blue, uint16_t transision_period )
+{
+
+    uint16_t i;
+    /*
+     * Set all to low first
+     */
+    for( i = 0; i < LED_BAR_NO_LEDS; i++ ) {
+    	display_state_levels[ i ][ EV_LED_RED ] = (uint16_t) ( (float) red * EVD_LOW );
+    	display_state_levels[ i ][ EV_LED_GREEN ] = (uint16_t) ( (float) green * EVD_LOW );
+    	display_state_levels[ i ][ EV_LED_BLUE ] = (uint16_t) ( (float) blue * EVD_LOW );
+    }
+    /*
+     * Calculate the entries for each BAR LED
+     */
+    /*
+     *  0   1   2   3   4   5   6   7   8   9   10  11
+     * LOW MED LOW MED LOW MED LOW MED LOW MED LOW MED
+     */
+    display_state_levels[ 1 ][ EV_LED_RED ] = (uint16_t) ( (float) red * EVD_MED );
+    display_state_levels[ 1 ][ EV_LED_GREEN ] = (uint16_t) ( (float) green * EVD_MED );
+    display_state_levels[ 1 ][ EV_LED_BLUE ] = (uint16_t) ( (float) blue * EVD_MED );
+
+    display_state_levels[ 3 ][ EV_LED_RED ] = (uint16_t) ( (float) red * EVD_MED );
+    display_state_levels[ 3 ][ EV_LED_GREEN ] = (uint16_t) ( (float) green * EVD_MED );
+    display_state_levels[ 3 ][ EV_LED_BLUE ] = (uint16_t) ( (float) blue * EVD_MED );
+
+    display_state_levels[ 5 ][ EV_LED_RED ] = (uint16_t) ( (float) red * EVD_MED );
+    display_state_levels[ 5 ][ EV_LED_GREEN ] = (uint16_t) ( (float) green * EVD_MED );
+    display_state_levels[ 5 ][ EV_LED_BLUE ] = (uint16_t) ( (float) blue * EVD_MED );
+
+    display_state_levels[ 7 ][ EV_LED_RED ] = (uint16_t) ( (float) red * EVD_MED );
+    display_state_levels[ 7 ][ EV_LED_GREEN ] = (uint16_t) ( (float) green * EVD_MED );
+    display_state_levels[ 7 ][ EV_LED_BLUE ] = (uint16_t) ( (float) blue * EVD_MED );
+
+    display_state_levels[ 9 ][ EV_LED_RED ] = (uint16_t) ( (float) red * EVD_MED );
+    display_state_levels[ 9 ][ EV_LED_GREEN ] = (uint16_t) ( (float) green * EVD_MED );
+    display_state_levels[ 9 ][ EV_LED_BLUE ] = (uint16_t) ( (float) blue * EVD_MED );
+
+    display_state_levels[ 11 ][ EV_LED_RED ] = (uint16_t) ( (float) red * EVD_MED );
+    display_state_levels[ 11 ][ EV_LED_GREEN ] = (uint16_t) ( (float) green * EVD_MED );
+    display_state_levels[ 11 ][ EV_LED_BLUE ] = (uint16_t) ( (float) blue * EVD_MED );
 
     hs.tansistion_time = transision_period;
     hs.led_bar_state = LED_BAR_INIT;
