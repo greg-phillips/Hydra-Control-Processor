@@ -1,0 +1,4 @@
+sensirion_support.c:78:6:sensirion_sleep_usec	16	static
+sensirion_support.c:87:6:sensirion_i2c_init	8	static
+sensirion_support.c:98:9:sensirion_i2c_read	16	static
+sensirion_support.c:119:9:sensirion_i2c_write	16	static

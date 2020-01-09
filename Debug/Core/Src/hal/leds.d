@@ -37,8 +37,9 @@ Core/Src/hal/leds.o: ../Core/Src/hal/leds.c \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_uart.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_uart_ex.h \
  ../Core/Inc/system.h ../Core/Inc/structs.h ../Core/Inc/system.h \
- ../Core/Inc/kalman_filter.h ../Core/Inc/ck_time.h \
- ../Core/Inc/led_color_defs.h ../Core/Inc/leds.h
+ ../Core/Inc/common.h ../Core/Inc/kalman_filter.h \
+ ../Core/Inc/bsec_datatypes.h ../Core/Inc/ck_time.h \
+ ../Core/Src/hal/led_color_defs.h ../Core/Inc/leds.h
 
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal.h:
 
@@ -120,10 +121,14 @@ Core/Src/hal/leds.o: ../Core/Src/hal/leds.c \
 
 ../Core/Inc/system.h:
 
+../Core/Inc/common.h:
+
 ../Core/Inc/kalman_filter.h:
+
+../Core/Inc/bsec_datatypes.h:
 
 ../Core/Inc/ck_time.h:
 
-../Core/Inc/led_color_defs.h:
+../Core/Src/hal/led_color_defs.h:
 
 ../Core/Inc/leds.h:

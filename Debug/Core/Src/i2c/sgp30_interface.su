@@ -1,0 +1,2 @@
+sgp30_interface.c:84:6:init_SGP30	40	static
+sgp30_interface.c:157:6:get_voc_co2_eq	24	static

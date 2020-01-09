@@ -11,9 +11,15 @@ RM := rm -rf
 -include Drivers/STM32G0xx_HAL_Driver/Src/subdir.mk
 -include Core/Startup/subdir.mk
 -include Core/Src/time/subdir.mk
+-include Core/Src/product/subdir.mk
 -include Core/Src/init/subdir.mk
 -include Core/Src/iMatrix/kalman_filter/subdir.mk
+-include Core/Src/i2c/sps30/subdir.mk
+-include Core/Src/i2c/sgp30/subdir.mk
+-include Core/Src/i2c/embedded-common/subdir.mk
+-include Core/Src/i2c/subdir.mk
 -include Core/Src/hal/subdir.mk
+-include Core/Src/cs_ctrl/subdir.mk
 -include Core/Src/subdir.mk
 -include subdir.mk
 -include objects.mk

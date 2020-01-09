@@ -27,8 +27,9 @@
 
 #include <stdbool.h>
 #include "system.h"
+#include "common.h"
 #include "kalman_filter.h"
-
+#include "bsec_datatypes.h"
 /** @file structs.h
  *
  *  Created on: December 30, 2019
@@ -47,7 +48,7 @@
 /******************************************************
  *                    Constants
  ******************************************************/
-
+#define SAT_NO_SECTORS		( 4096 / 4 )	// 4096 entries - broken into 32 bits each blocks
 /******************************************************
  *                   Enumerations
  ******************************************************/
@@ -91,7 +92,21 @@ typedef enum {
     LED_BAR_SCAN_RIGHT,
 } led_bar_states_t;
 
-typedef struct hydra_status {
+typedef struct _sensor_control_block {
+	imx_control_sensor_block_t csb;
+	control_sensor_data_t csd;
+	uint16_t start_sector;
+	uint16_t start_offset;
+	uint16_t end_sector;
+	uint16_t end_offset;
+	uint16_t count;
+} cp_control_sensor_block_t;
+
+typedef struct _sector_assignment_table {
+	uint32_t block[ SAT_NO_SECTORS ];
+} sector_assignment_table_t;
+
+typedef struct _hydra_status {
 	/*
 	 * LED Display variables
 	 */
@@ -183,9 +198,12 @@ typedef struct hydra_status {
     uint32_t iaq_baseline;
     uint32_t spi_errors;
 
+    uint8_t bsec_state[ BSEC_MAX_PROPERTY_BLOB_SIZE ];
+    uint8_t bsec_config[ BSEC_MAX_PROPERTY_BLOB_SIZE ];
     /*
      * Set if data is valid
      */
+    unsigned int bsec_state_valid       		: 1;
     unsigned int led_bar_display_status         : 1;    // Should we show status on the level bar - Off when operating on Battery
     unsigned int ev_display_scan_mode           : 1;    // Running led "Scanning process"
     unsigned int ignore_save                    : 1;

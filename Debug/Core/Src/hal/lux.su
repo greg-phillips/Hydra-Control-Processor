@@ -1,0 +1,2 @@
+lux.c:72:6:lux_sensor_on	16	static
+lux.c:81:6:update_lux	16	static

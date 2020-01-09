@@ -138,7 +138,7 @@ void led_init(void)
 	hs.led_bar_state = LED_BAR_INIT;
     hs.ev_display_scan_mode = true;
     hs.led_bar_display_status = true;
-    led_bar_working_setup( green_blend_scan[ 0 ], green_blend_scan[ 1 ], green_blend_scan[ 2 ], 250 );
+    led_bar_scan_setup( green_blend_scan[ 0 ], green_blend_scan[ 1 ], green_blend_scan[ 2 ], 250 );
 }
 /**
   * @brief	Process the LED Display
