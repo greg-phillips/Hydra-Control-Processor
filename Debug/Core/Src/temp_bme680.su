@@ -1,6 +1,0 @@
-temp_bme680.c:77:6:init_bme680	8	static
-temp_bme680.c:81:23:bsec_sensor_control	24	static
-temp_bme680.c:85:6:bme680_bsec_trigger_measurement	16	static
-temp_bme680.c:89:6:bme680_bsec_read_data	24	static
-temp_bme680.c:93:1:bme680_bsec_process_data	24	static
-temp_bme680.c:97:23:bsec_get_state	24	static

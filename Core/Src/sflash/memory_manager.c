@@ -35,10 +35,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <memory.h>
 
+#include "main.h"
+#include "system.h"
 #include "structs.h"
+#include "product.h"
 #include "spi_flash.h"
-#include "time.h"
+#include "utc_time.h"
 #include "memory_manager.h"
 /******************************************************
  *                      Macros
@@ -89,11 +93,10 @@ extern CRC_HandleTypeDef hcrc;
   * @param  type of device Control / Sensor, entry number in array, value
   * @retval : None
   */
-void save_tsd( imx_peripheral_type_t type, unit16_t entry, uint32_t value )
+void save_tsd( imx_peripheral_type_t type, uint16_t entry, uint32_t value )
 {
 	uint16_t new_sector, *end_sector, *count;
-	uint32_t *init_crc_value, device_id, sector_offset, utc_time;
-	control_sensor_data_t *csd;
+	uint32_t *init_crc_value, byte_offset, utc_time;
 	imx_control_sensor_block_t *csb;
 	bool event_driven, allocate_new_sector;
 
@@ -101,10 +104,9 @@ void save_tsd( imx_peripheral_type_t type, unit16_t entry, uint32_t value )
 	event_driven = false;
     if( type == IMX_CONTROLS ) {
     	csb = &cb[ 0 ].csb;
-    	csd = &cd[ 0 ].csd;
     	init_crc_value = &cb[ entry ].init_crc_value;
-		end_sector = &cb[ i ].end_sector;
-		count = cb[ i ].count;
+		end_sector = &cb[ entry ].end_sector;
+		count = &cb[ entry ].count;
         if( csb[ entry ].sample_rate != 0 ) {
         	if( cb[ entry ].count >= NO_TSD_ENTRIES_PER_SECTOR )
         		allocate_new_sector = true;
@@ -115,10 +117,9 @@ void save_tsd( imx_peripheral_type_t type, unit16_t entry, uint32_t value )
         }
     } else {
     	csb = &sb[ 0 ].csb;
-    	csd = &sb[ 0 ].csd;
     	init_crc_value = &sb[ entry ].init_crc_value;
-		end_sector = &sb[ i ].end_sector;
-		count = sb[ i ].count;
+		end_sector = &sb[ entry ].end_sector;
+		count = &sb[ entry ].count;
         if( csb[ entry ].sample_rate != 0 ) {
         	if( sb[ entry ].count >= NO_TSD_ENTRIES_PER_SECTOR )
         		allocate_new_sector = true;
@@ -132,23 +133,23 @@ void save_tsd( imx_peripheral_type_t type, unit16_t entry, uint32_t value )
      * Initialize the CRC controller
      */
     IMX_CRC_Init( *init_crc_value );
+    /*
+     * Calculate the byte offset in the FLASH based on the sector we are using
+     */
+	byte_offset = START_OF_DATA + ( *end_sector * SFLASH_SECTOR_SIZE );
 
     if( allocate_new_sector == true ) {
     	new_sector = get_next_sector();
     	/*
-    	 * Calculate the offset of this sector in the SFLASH
-    	 */
-    	sector_offset = START_OF_DATA + ( *end_sector * SFLASH_SECTOR_SIZE )
-    	/*
     	 * Save device ID, new sector info, and CRC
     	 */
     	*init_crc_value = HAL_CRC_Accumulate(&hcrc, (uint32_t *)&csb[ entry ].id, 4 );
-    	sFLASH_WriteBuffer( &csb[ entry ].id, sector_offset + SECTOR_ID_ADDRESS, 4 );
+    	sFLASH_WriteBuffer( (uint8_t *) &csb[ entry ].id, byte_offset + SECTOR_ID_ADDRESS, 4 );
 
     	*init_crc_value = HAL_CRC_Accumulate(&hcrc, (uint32_t *)&new_sector, 2 );
-    	sFLASH_WriteBuffer( init_crc_value, sector_offset + NEXT_SECTOR_ADDRESS, 2 );
+    	sFLASH_WriteBuffer( (uint8_t *) &init_crc_value, byte_offset + NEXT_SECTOR_ADDRESS, 2 );
 
-    	sFLASH_WriteBuffer( &csb[ entry ].id, sector_offset + CRC_ADDRESS, 4 );
+    	sFLASH_WriteBuffer( (uint8_t *) &csb[ entry ].id, byte_offset + CRC_ADDRESS, 4 );
 
     	*init_crc_value = 0xFFFFFFFF;
         /*
@@ -156,8 +157,10 @@ void save_tsd( imx_peripheral_type_t type, unit16_t entry, uint32_t value )
          */
         IMX_CRC_Init( *init_crc_value );
         *end_sector = new_sector;
-        *sector_offset = 0;
-        *count = 0;
+        /*
+         * re-Calculate the byte offset in the FLASH based on the sector we are using
+         */
+    	byte_offset = START_OF_DATA + ( *end_sector * SFLASH_SECTOR_SIZE );
     }
     /*
      * Save the value to SFLASH
@@ -166,23 +169,23 @@ void save_tsd( imx_peripheral_type_t type, unit16_t entry, uint32_t value )
     	/*
     	 * Write out the time first.
     	 */
-    	utc_time = get_utc_time();
+    	utc_time = get_current_utc();
     	/*
     	 * Add to CRC
     	 */
     	*init_crc_value = HAL_CRC_Accumulate(&hcrc, (uint32_t *)&utc_time, 4 );
-    	sFLASH_WriteBuffer( &csb[ entry ].id, sector_offset + ( *count * EVT_RECORD_SIZE ), 4 );
+    	sFLASH_WriteBuffer( (uint8_t *) &csb[ entry ].id, byte_offset + ( *count * EVT_RECORD_SIZE ), 4 );
     	/*
     	 * Save Value
     	 */
     	*init_crc_value = HAL_CRC_Accumulate(&hcrc, (uint32_t *)&value, 4 );
-    	sFLASH_WriteBuffer( &value, sector_offset + ( *count * EVT_RECORD_SIZE ) + 4, 4 );
+    	sFLASH_WriteBuffer( (uint8_t *) &value, byte_offset + ( *count * EVT_RECORD_SIZE ) + 4, 4 );
     } else {
     	/*
     	 * Save Value
     	 */
     	*init_crc_value = HAL_CRC_Accumulate(&hcrc, (uint32_t *)&value, 4 );
-    	sFLASH_WriteBuffer( &value, sector_offset + ( *count * EVT_RECORD_SIZE ) + 4, 4 );
+    	sFLASH_WriteBuffer( (uint8_t *) &value, byte_offset + ( *count * EVT_RECORD_SIZE ) + 4, 4 );
     }
     *count += 1;
 
@@ -291,3 +294,4 @@ static void IMX_CRC_Init( uint32_t initial_value )
   if (HAL_CRC_Init(&hcrc) != HAL_OK) {
     printf( "Failed to initialize CRC Device\r\n" );
   }
+}

@@ -1,0 +1,15 @@
+spi_flash.c:79:6:erase_sector	16	static
+spi_flash.c:167:6:sFLASH_DeInit	8	static
+spi_flash.c:177:6:sFLASH_Init	8	static
+spi_flash.c:191:6:sFLASH_EraseSector	16	static
+spi_flash.c:219:6:sFLASH_EraseBulk	8	static
+spi_flash.c:247:6:sFLASH_WritePage	24	static
+spi_flash.c:288:6:sFLASH_WriteBuffer	40	static
+spi_flash.c:366:6:sFLASH_ReadBuffer	24	static
+spi_flash.c:398:10:sFLASH_ReadID	24	static
+spi_flash.c:434:6:sFLASH_StartReadSequence	16	static
+spi_flash.c:458:9:sFLASH_ReadByte	8	static
+spi_flash.c:469:9:sFLASH_SendByte	40	static
+spi_flash.c:489:10:sFLASH_SendHalfWord	40	static
+spi_flash.c:506:6:sFLASH_WriteEnable	8	static
+spi_flash.c:524:6:sFLASH_WaitForWriteEnd	24	static

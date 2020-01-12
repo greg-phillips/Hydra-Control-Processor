@@ -11,6 +11,7 @@ RM := rm -rf
 -include Drivers/STM32G0xx_HAL_Driver/Src/subdir.mk
 -include Core/Startup/subdir.mk
 -include Core/Src/time/subdir.mk
+-include Core/Src/sflash/subdir.mk
 -include Core/Src/product/subdir.mk
 -include Core/Src/init/subdir.mk
 -include Core/Src/iMatrix/kalman_filter/subdir.mk
@@ -48,7 +49,7 @@ all: Hydra\ 1.0.elf secondary-outputs
 
 # Tool invocations
 Hydra\ 1.0.elf: $(OBJS) $(USER_OBJS) C:\Users\greg.phillips\STM32CubeIDE\workspace_1.1.0\Hydra\ 1.0\STM32G031K8UX_FLASH.ld
-	arm-none-eabi-gcc -o "Hydra 1.0.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0plus -T"C:\Users\greg.phillips\STM32CubeIDE\workspace_1.1.0\Hydra 1.0\STM32G031K8UX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Hydra 1.0.map" -Wl,--gc-sections -Wl,--verbose -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+	arm-none-eabi-gcc -o "Hydra 1.0.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0plus -T"C:\Users\greg.phillips\STM32CubeIDE\workspace_1.1.0\Hydra 1.0\STM32G031K8UX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Hydra 1.0.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

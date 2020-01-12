@@ -26,6 +26,7 @@ Core/Src/i2c/sps30 \
 Core/Src/iMatrix/kalman_filter \
 Core/Src/init \
 Core/Src/product \
+Core/Src/sflash \
 Core/Src/time \
 Core/Startup \
 Drivers/STM32G0xx_HAL_Driver/Src \

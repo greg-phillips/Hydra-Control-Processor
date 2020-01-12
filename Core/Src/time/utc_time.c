@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <time.h>
 
+#include "main.h"
 #include "stm32g0xx_hal_conf.h"
 
 /******************************************************

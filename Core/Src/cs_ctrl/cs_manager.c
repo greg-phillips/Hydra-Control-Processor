@@ -113,11 +113,10 @@ void cs_init(void)
 			 */
 			return;
 		}
-		init_crc_value = 0xFFFFFFFF;
+		cb[ i ].init_crc_value = 0xFFFFFFFF;
 		cb[ i ].start_sector = sector;
 		cb[ i ].start_offset = 0;
 		cb[ i ].end_sector = sector;
-		cb[ i ].end_offset = 0;
 		cb[ i ].count = 0;
 	}
 	for( i = 0; i < hs.no_sensors; i++ ) {
@@ -128,10 +127,10 @@ void cs_init(void)
 			 */
 			return;
 		}
+		sb[ i ].init_crc_value = 0xFFFFFFFF;
 		sb[ i ].start_sector = sector;
 		sb[ i ].start_offset = 0;
 		sb[ i ].end_sector = sector;
-		sb[ i ].end_offset = 0;
 		sb[ i ].count = 0;
 	}
 }
