@@ -47,7 +47,7 @@
 #define NO_DISPLAY_STATES                   ( 8 )
 
 #define EV_TEMP_OFFSET                      ( 0.0 )     // Offset for device heating
-
+#define SFLASH_DATA_STORAGE					( 4 * 1024 * 1024 )
 /******************************************************
 *               Function Definitions
 ******************************************************/

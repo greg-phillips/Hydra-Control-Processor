@@ -1,0 +1,13 @@
+i2c_manager.c:140:6:i2c_init_lux	8	static
+i2c_manager.c:153:6:i2c_init_temp_humidity	16	static
+i2c_manager.c:166:6:i2c_init_CO2_voc	16	static
+i2c_manager.c:179:6:i2c_init_particulate_matter	16	static
+i2c_manager.c:192:6:i2c_init_enviromental	16	static
+i2c_manager.c:214:6:i2c_init	16	static
+i2c_manager.c:230:6:i2c_manager_init	16	static
+i2c_manager.c:314:6:i2c_sensor_process	32	static
+i2c_manager.c:487:6:i2c_write_read_sensor	40	static
+i2c_manager.c:523:6:i2c_write_sensor	24	static
+i2c_manager.c:548:6:i2c_read_sensor	24	static
+i2c_manager.c:574:6:print_sensor_process	64	static
+i2c_manager.c:601:6:sensor_error	0	static

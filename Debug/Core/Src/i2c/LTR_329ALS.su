@@ -2,4 +2,3 @@ LTR_329ALS.c:140:6:init_LTR_329ALS	40	static
 LTR_329ALS.c:202:6:LTR_32ALS_set_mode	16	static
 LTR_329ALS.c:215:6:LTR_329ALS_get_lux_level	48	static
 LTR_329ALS.c:309:6:calc_lux	56	static
-LTR_329ALS.c:389:6:lux_test	24	static

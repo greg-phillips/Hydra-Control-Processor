@@ -216,7 +216,7 @@ void led_bar_breath_setup( uint16_t red, uint16_t green, uint16_t blue, uint16_t
 	display_state_levels[ 0 ][ EV_LED_GREEN ] = green;
 	display_state_levels[ 0 ][ EV_LED_BLUE ] = blue;
 
-    hs.tansistion_time = transision_period;
+    hs.led_transistion_time = transision_period;
     hs.led_bar_state = LED_BAR_INIT;
     hs.ev_display_scan_mode = true;
     hs.led_bar_display_status = true;
@@ -271,7 +271,7 @@ void led_bar_scan_setup( uint16_t red, uint16_t green, uint16_t blue, uint16_t t
     display_state_levels[ 8 ][ EV_LED_GREEN ] = (uint16_t) ( (float) green * EVD_MED );
     display_state_levels[ 8 ][ EV_LED_BLUE ] = (uint16_t) ( (float) blue * EVD_MED );
 
-    hs.tansistion_time = transision_period;
+    hs.led_transistion_time = transision_period;
     hs.led_bar_state = LED_BAR_INIT;
     hs.ev_display_scan_mode = true;
     hs.led_bar_display_status = true;
@@ -321,7 +321,7 @@ void led_bar_working_setup( uint16_t red, uint16_t green, uint16_t blue, uint16_
     display_state_levels[ 11 ][ EV_LED_GREEN ] = (uint16_t) ( (float) green * EVD_MED );
     display_state_levels[ 11 ][ EV_LED_BLUE ] = (uint16_t) ( (float) blue * EVD_MED );
 
-    hs.tansistion_time = transision_period;
+    hs.led_transistion_time = transision_period;
     hs.led_bar_state = LED_BAR_INIT;
     hs.ev_display_scan_mode = true;
     hs.led_bar_display_status = true;
@@ -358,7 +358,7 @@ void led_bar_scan_mode_right( uint32_t current_time )
             hs.led_bar_state = LED_BAR_SCAN_RIGHT;
             break;
         case LED_BAR_SCAN_RIGHT :
-            if( imx_is_later( current_time, hs.led_bar_last_update + hs.tansistion_time ) ) {
+            if( imx_is_later( current_time, hs.led_bar_last_update + hs.led_transistion_time ) ) {
                 for( i = 0; i < LED_BAR_NO_LEDS; i++ ) {
                 	index = hs.led_bar_display_state + i;
                 	if( index >= LED_BAR_NO_LEDS )
@@ -405,7 +405,7 @@ void led_bar_scan_mode_left( uint32_t current_time )
             hs.led_bar_state = LED_BAR_SCAN_LEFT;
             break;
         case LED_BAR_SCAN_LEFT :
-            if( imx_is_later( current_time, hs.led_bar_last_update + hs.tansistion_time ) ) {
+            if( imx_is_later( current_time, hs.led_bar_last_update + hs.led_transistion_time ) ) {
                 for( i = 0; i < LED_BAR_NO_LEDS; i++ ) {
                 	index = hs.led_bar_display_state + i;
                 	if( index >= LED_BAR_NO_LEDS )
@@ -452,7 +452,7 @@ void led_bar_scan_mode_dual( uint32_t current_time )
             hs.led_bar_state = LED_BAR_SCAN_LEFT;
             break;
         case LED_BAR_SCAN_LEFT :
-            if( imx_is_later( current_time, hs.led_bar_last_update + hs.tansistion_time ) ) {
+            if( imx_is_later( current_time, hs.led_bar_last_update + hs.led_transistion_time ) ) {
                 for( i = 0; i < LED_BAR_NO_LEDS; i++ ) {
                 	index = hs.led_bar_display_state + i;
                 	if( index >= LED_BAR_NO_LEDS )
@@ -480,7 +480,7 @@ void led_bar_scan_mode_dual( uint32_t current_time )
             }
             break;
         case LED_BAR_SCAN_RIGHT :
-            if( imx_is_later( current_time, hs.led_bar_last_update + hs.tansistion_time ) ) {
+            if( imx_is_later( current_time, hs.led_bar_last_update + hs.led_transistion_time ) ) {
                 for( i = 0; i < LED_BAR_NO_LEDS; i++ ) {
                 	index = hs.led_bar_display_state + i;
                 	if( index >= LED_BAR_NO_LEDS )
@@ -532,7 +532,7 @@ void led_bar_breath_mode( uint32_t current_time )
             hs.led_bar_state = LED_BAR_SCAN_LEFT;
             break;
         case LED_BAR_SCAN_LEFT :
-            if( imx_is_later( current_time, hs.led_bar_last_update + hs.tansistion_time ) ) {
+            if( imx_is_later( current_time, hs.led_bar_last_update + hs.led_transistion_time ) ) {
                 for( i = 0; i < LED_BAR_NO_LEDS; i++ ) {
                 	factor = (float)( hs.led_bar_display_state ) / (float) (NO_BREATH_STEPS);
                 	set_led_bar_raw( i, (uint16_t) ( (float)display_state_levels[ 0 ][ EV_LED_RED ] * factor ),
@@ -552,7 +552,7 @@ void led_bar_breath_mode( uint32_t current_time )
             }
             break;
         case LED_BAR_SCAN_RIGHT :
-            if( imx_is_later( current_time, hs.led_bar_last_update + hs.tansistion_time ) ) {
+            if( imx_is_later( current_time, hs.led_bar_last_update + hs.led_transistion_time ) ) {
                 for( i = 0; i < LED_BAR_NO_LEDS; i++ ) {
                 	factor = (float)( hs.led_bar_display_state ) / (float) (NO_BREATH_STEPS);
                 	set_led_bar_raw( i, (uint16_t) ( (float)display_state_levels[ 0 ][ EV_LED_RED ] * factor ),

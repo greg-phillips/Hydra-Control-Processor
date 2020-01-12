@@ -33,6 +33,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <memory.h>
+
+#include "stm32g0xx_hal.h"
 
 #include "common.h"
 #include "structs.h"
@@ -44,6 +47,7 @@
 #include "lux.h"
 #include "temp_humidity.h"
 #include "co2_voc.h"
+#include "ck_time.h"
 #include "i2c_manager.h"
 /******************************************************
  *                      Macros
@@ -61,7 +65,7 @@
  *                    Constants
  ******************************************************/
 #define NO_SPI_I2C_DEVICES      0x04    // Number of devices
-
+#define I2C_DEFAULT_TIMEOUT		10		// 10 mS - way too long but it means a real timeout
 #define SAMPLE_STAGGER          200     // Separate each sample 200mS
 #define DO_NOT_SAMPLE           0
 #define DEFAULT_SAMPLE_RATE     1000    // Check every 1 Second
@@ -89,7 +93,8 @@ typedef enum {
 } i2c_sensor_read_states_t;
 
 typedef struct {
-//    wiced_i2c_device_t device;
+	I2C_HandleTypeDef *device;
+	uint8_t address;
     uint32_t samples;
     uint32_t sample_rate;
     uint32_t last_sample_time;
@@ -117,8 +122,8 @@ static void reset_i2c(uint16_t i2c_device );
 /******************************************************
  *               Variable Definitions
  ******************************************************/
+extern I2C_HandleTypeDef hi2c2;
 static i2c_t i2c;
-
 static i2c_device_t i2c_devices[ NO_I2C_DEVICES ];
 extern hydra_status_t hs;
 const char *i2c_label[ NO_I2C_DEVICES ] =
@@ -186,7 +191,7 @@ void i2c_init_particulate_matter(void)
 }
 void i2c_init_enviromental(void)
 {
-    if( init_BME680() == true )  {
+    if( init_bme680() == true )  {
         PRINTF( "Environmental Sensor Initialized\r\n" );
         i2c_devices[ I2C_BME680 ].enabled = true;
         i2c_devices[ I2C_BME680 ].sensor_error = false;
@@ -236,13 +241,9 @@ void i2c_manager_init( uint32_t current_time )
     /*
      * LTR_329ALS, - Lux sensor
      */
-    /*
-    i2c_devices[ I2C_LTR_329ALS ].device.port = WICED_I2C_1;
-    i2c_devices[ I2C_LTR_329ALS ].device.address = I2C_LTR_329ALS_ADDRESS;    // External LUX Sensor LTR-329ALS
-    i2c_devices[ I2C_LTR_329ALS ].device.address_width = I2C_ADDRESS_WIDTH_7BIT;
-    i2c_devices[ I2C_LTR_329ALS ].device.flags = 0;
-    i2c_devices[ I2C_LTR_329ALS ].device.speed_mode = I2C_HIGH_SPEED_MODE;
-    */
+    i2c_devices[ I2C_LTR_329ALS ].device = &hi2c2;
+    i2c_devices[ I2C_LTR_329ALS ].address = I2C_LTR_329ALS_ADDRESS;    // External LUX Sensor LTR-329ALS
+
     i2c_devices[ I2C_LTR_329ALS ].samples = 0;
     i2c_devices[ I2C_LTR_329ALS ].sample_rate = DEFAULT_SAMPLE_RATE;
     i2c_devices[ I2C_LTR_329ALS ].last_sample_time = current_time - ( SAMPLE_STAGGER * 2 );
@@ -253,13 +254,9 @@ void i2c_manager_init( uint32_t current_time )
     /*
      * Si7020 - Temperature Humidity Sensor
      */
-    /*
-    i2c_devices[ I2C_Si7020 ].device.port = WICED_I2C_1;
-    i2c_devices[ I2C_Si7020 ].device.address = I2C_Si7020_ADDRESS;        // Default for on board Temp / Humidity Sensor Si7020
-    i2c_devices[ I2C_Si7020 ].device.address_width = I2C_ADDRESS_WIDTH_7BIT;
-    i2c_devices[ I2C_Si7020 ].device.flags = 0;
-    i2c_devices[ I2C_Si7020 ].device.speed_mode = I2C_STANDARD_SPEED_MODE,
-    */
+    i2c_devices[ I2C_Si7020 ].device = &hi2c2;
+    i2c_devices[ I2C_Si7020 ].address = I2C_Si7020_ADDRESS;        // Default for on board Temp / Humidity Sensor Si7020
+
     i2c_devices[ I2C_Si7020 ].samples = 0;
     i2c_devices[ I2C_Si7020 ].sample_rate = DEFAULT_SAMPLE_RATE;
     i2c_devices[ I2C_Si7020 ].last_sample_time = current_time - ( SAMPLE_STAGGER * 3 );
@@ -270,13 +267,9 @@ void i2c_manager_init( uint32_t current_time )
     /*
      * SGP30 - CO2 / VOC Sensor
      */
-    /*
-    i2c_devices[ I2C_SGP30 ].device.port = WICED_I2C_1;
-    i2c_devices[ I2C_SGP30 ].device.address = I2C_SGP30_ADDRESS;
-    i2c_devices[ I2C_SGP30 ].device.address_width = I2C_ADDRESS_WIDTH_7BIT;
-    i2c_devices[ I2C_SGP30 ].device.flags = 0;
-    i2c_devices[ I2C_SGP30 ].device.speed_mode = I2C_STANDARD_SPEED_MODE,
-    */
+    i2c_devices[ I2C_SGP30 ].device = &hi2c2;
+    i2c_devices[ I2C_SGP30 ].address = I2C_SGP30_ADDRESS;
+
     i2c_devices[ I2C_SGP30 ].samples = 0;
     i2c_devices[ I2C_SGP30 ].sample_rate = DEFAULT_SAMPLE_RATE;
     i2c_devices[ I2C_SGP30 ].last_sample_time = current_time - ( SAMPLE_STAGGER * 4 );
@@ -287,13 +280,9 @@ void i2c_manager_init( uint32_t current_time )
     /*
      * SPS30 - Particulate Matter
      */
-    /*
-    i2c_devices[ I2C_SPS30 ].device.port = WICED_I2C_1;
-    i2c_devices[ I2C_SPS30 ].device.address = I2C_SPS30_ADDRESS;
-    i2c_devices[ I2C_SPS30 ].device.address_width = I2C_ADDRESS_WIDTH_7BIT;
-    i2c_devices[ I2C_SPS30 ].device.flags = 0;
-    i2c_devices[ I2C_SPS30 ].device.speed_mode = I2C_STANDARD_SPEED_MODE,
-    */
+    i2c_devices[ I2C_SPS30 ].device = &hi2c2;
+    i2c_devices[ I2C_SPS30 ].address = I2C_SPS30_ADDRESS;
+
     i2c_devices[ I2C_SPS30 ].samples = 0;
     i2c_devices[ I2C_SPS30 ].sample_rate = DEFAULT_SAMPLE_RATE;
     i2c_devices[ I2C_SPS30 ].last_sample_time = current_time - ( SAMPLE_STAGGER * 5 );
@@ -304,13 +293,9 @@ void i2c_manager_init( uint32_t current_time )
     /*
      * BME680 - Environmental Sensor
      */
-    /*
-    i2c_devices[ I2C_BME680 ].device.port = WICED_I2C_1;
-    i2c_devices[ I2C_BME680 ].device.address = I2C_BME680_ADDRESS;
-    i2c_devices[ I2C_BME680 ].device.address_width = I2C_ADDRESS_WIDTH_7BIT;
-    i2c_devices[ I2C_BME680 ].device.flags = 0;
-    i2c_devices[ I2C_BME680 ].device.speed_mode = I2C_STANDARD_SPEED_MODE,
-    */
+    i2c_devices[ I2C_BME680 ].device = &hi2c2;
+    i2c_devices[ I2C_BME680 ].address = I2C_BME680_ADDRESS;
+
     i2c_devices[ I2C_BME680 ].samples = 0;
     i2c_devices[ I2C_BME680 ].sample_rate = 3000;
     i2c_devices[ I2C_BME680 ].last_sample_time = current_time - ( SAMPLE_STAGGER * 6 );
@@ -501,29 +486,30 @@ void i2c_sensor_process( uint32_t current_time )
 
 bool i2c_write_read_sensor( i2c_devices_t i2c_device, uint8_t *tx_data, uint16_t tx_count, uint8_t *rx_data, uint16_t rx_count )
 {
-    uint16_t i2c_result;
-//    wiced_i2c_message_t message;
+	HAL_StatusTypeDef i2c_result;
 
     if( i2c_device >= NO_I2C_DEVICES)
         return false;
-/*
-    i2c_result = wiced_i2c_init( &i2c_devices[ i2c_device ].device );
 
-    i2c_result = wiced_i2c_init_combined_message( &message, tx_data, rx_data, tx_count, rx_count, 1, true );
-    if( i2c_result != WICED_SUCCESS ) {
-        PRINTF( "Failed to initialize combined message, for i2c device %u: result: %u\r\n", i2c_device, i2c_result );
-        wiced_i2c_deinit( &i2c_devices[ i2c_device ].device );
-        return false;
-    }
-    i2c_result = wiced_i2c_transfer( &i2c_devices[ i2c_device ].device, &message, 1 );
-    if( i2c_result != WICED_SUCCESS ) {
+    /*
+     * Send the write request out first
+     */
+    i2c_result = HAL_I2C_Master_Transmit( i2c_devices[ i2c_device ].device, i2c_devices[ i2c_device ].address, tx_data, tx_count, I2C_DEFAULT_TIMEOUT );
+    if( i2c_result != HAL_OK ) {
         i2c_devices[ i2c_device ].error_count += 1;
-        PRINTF( "Failed to transfer message, for i2c device %u: result: %u\r\n", i2c_device, i2c_result );
-        wiced_i2c_deinit( &i2c_devices[ i2c_device ].device );
+        PRINTF( "Failed to transmit message, for i2c device %u: result: %u\r\n", i2c_device, i2c_result );
         return false;
     }
-    wiced_i2c_deinit( &i2c_devices[ i2c_device ].device );
-*/
+    /*
+     * Get read response
+     */
+    i2c_result = HAL_I2C_Master_Receive( i2c_devices[ i2c_device ].device, i2c_devices[ i2c_device ].address, rx_data, rx_count, I2C_DEFAULT_TIMEOUT );
+    if( i2c_result != HAL_OK ) {
+        i2c_devices[ i2c_device ].error_count += 1;
+        PRINTF( "Failed to receive message, for i2c device %u: result: %u\r\n", i2c_device, i2c_result );
+        return false;
+    }
+
     return true;
 }
 
@@ -536,29 +522,21 @@ bool i2c_write_read_sensor( i2c_devices_t i2c_device, uint8_t *tx_data, uint16_t
 
 bool i2c_write_sensor( i2c_devices_t i2c_device, uint8_t *tx_data, uint16_t tx_count )
 {
-    uint16_t i2c_result;
-//    wiced_i2c_message_t message;
+	HAL_StatusTypeDef i2c_result;
 
     if( i2c_device >= NO_I2C_DEVICES)
         return false;
-/*
-    i2c_result = wiced_i2c_init( &i2c_devices[ i2c_device ].device );
 
-    i2c_result = wiced_i2c_init_tx_message( &message, tx_data, tx_count, 1, true );
-    if( i2c_result != WICED_SUCCESS ) {
-        PRINTF( "Failed to initialize combined message, for i2c device %u: result: %u\r\n", i2c_device, i2c_result );
-        wiced_i2c_deinit( &i2c_devices[ i2c_device ].device );
-        return false;
-    }
-    i2c_result = wiced_i2c_transfer( &i2c_devices[ i2c_device ].device , &message, 1 );
-    if( i2c_result != WICED_SUCCESS ) {
+    /*
+     * Send the write request
+     */
+    i2c_result = HAL_I2C_Master_Transmit( i2c_devices[ i2c_device ].device, i2c_devices[ i2c_device ].address, tx_data, tx_count, I2C_DEFAULT_TIMEOUT );
+    if( i2c_result != HAL_OK ) {
         i2c_devices[ i2c_device ].error_count += 1;
-        PRINTF( "Failed to transfer message, for i2c device %u: result: %u\r\n", i2c_device, i2c_result );
-        wiced_i2c_deinit( &i2c_devices[ i2c_device ].device );
+        PRINTF( "Failed to transmit message, for i2c device %u: result: %u\r\n", i2c_device, i2c_result );
         return false;
     }
-    wiced_i2c_deinit( &i2c_devices[ i2c_device ].device );
-*/
+
     return true;
 }
 /**
@@ -569,29 +547,21 @@ bool i2c_write_sensor( i2c_devices_t i2c_device, uint8_t *tx_data, uint16_t tx_c
 
 bool i2c_read_sensor( i2c_devices_t i2c_device, uint8_t *rx_data, uint16_t rx_count )
 {
-    uint16_t i2c_result;
-//    wiced_i2c_message_t message;
+	HAL_StatusTypeDef i2c_result;
 
     if( i2c_device >= NO_I2C_DEVICES)
         return false;
-/*
-    i2c_result = wiced_i2c_init( &i2c_devices[ i2c_device ].device );
 
-    i2c_result = wiced_i2c_init_rx_message( &message, rx_data, rx_count, 1, true );
-    if( i2c_result != WICED_SUCCESS ) {
-        PRINTF( "Failed to initialize combined message, for i2c device %u: result: %u\r\n", i2c_device, i2c_result );
-        wiced_i2c_deinit( &i2c_devices[ i2c_device ].device );
-        return false;
-    }
-    i2c_result = wiced_i2c_transfer( &i2c_devices[ i2c_device ].device , &message, 1 );
-    if( i2c_result != WICED_SUCCESS ) {
+    /*
+     * Send the read request
+     */
+    i2c_result = HAL_I2C_Master_Receive( i2c_devices[ i2c_device ].device, i2c_devices[ i2c_device ].address, rx_data, rx_count, I2C_DEFAULT_TIMEOUT );
+    if( i2c_result != HAL_OK ) {
         i2c_devices[ i2c_device ].error_count += 1;
         PRINTF( "Failed to receive message, for i2c device %u: result: %u\r\n", i2c_device, i2c_result );
-        wiced_i2c_deinit( &i2c_devices[ i2c_device ].device );
         return false;
     }
-    wiced_i2c_deinit( &i2c_devices[ i2c_device ].device );
-*/
+
     return true;
 }
 
@@ -611,7 +581,7 @@ void print_sensor_process(void)
         if( i2c_devices[ i ].enabled == true ) {
             printf( "%s", i2c_label[ i ] );
             printf( " 0x%02x      | %10lu |    %10lu |  %10lu | %10lu |   %10lu | %s |\r\n",
-//                    (uint16_t) i2c_devices[ i ].device.address,
+                    (uint16_t) i2c_devices[ i ].address,
                     i2c_devices[ i ].samples,
                     i2c_devices[ i ].sample_rate,
                     i2c_devices[ i ].last_sample_time,
@@ -620,7 +590,7 @@ void print_sensor_process(void)
                     ( i2c_devices[ i ].sensor_error == true ) ? "true "  : "false" );
         } else
             printf( " 0x%02x      | Disabled Sensor                                                      | %s |\r\n",
-//                    (uint16_t) i2c_devices[ i ].device.address,
+                    (uint16_t) i2c_devices[ i ].address,
                     ( i2c_devices[ i ].sensor_error == true ) ? "true "  : "false" );
     }
 
@@ -657,7 +627,6 @@ bool sensor_error( sensor_types_t sensor )
   */
 static void reset_i2c(uint16_t i2c_device )
 {
-    uint16_t i;
 
     return;
     PRINTF( "Resetting I2C Bus - device: %u failed\r\n", i2c_device );
@@ -680,6 +649,7 @@ static void reset_i2c(uint16_t i2c_device )
      * Clock 16 0s
      */
 /*
+    uint16_t i;
     for( i = 0; i < 16; i++ ) {
         wiced_gpio_output_high( WICED_GPIO_9  );    // SCL
         wiced_rtos_delay_milliseconds( 1 );

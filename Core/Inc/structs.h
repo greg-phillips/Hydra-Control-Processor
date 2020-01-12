@@ -48,7 +48,7 @@
 /******************************************************
  *                    Constants
  ******************************************************/
-#define SAT_NO_SECTORS		( 4096 / 4 )	// 4096 entries - broken into 32 bits each blocks
+#define SAT_NO_SECTORS		( (SFLASH_DATA_STORAGE / 1024 ) / 4 )	// with 4MB allocated this means 4096 entries - broken into 32 bits each blocks
 /******************************************************
  *                   Enumerations
  ******************************************************/
@@ -99,7 +99,7 @@ typedef struct _sensor_control_block {
 	uint16_t start_offset;
 	uint16_t end_sector;
 	uint16_t end_offset;
-	uint16_t count;
+	uint16_t count;		// This referes to the current sector NOT total count. Total Count is # sectors * number of readings in a sector + count
 } cp_control_sensor_block_t;
 
 typedef struct _sector_assignment_table {
@@ -108,10 +108,15 @@ typedef struct _sector_assignment_table {
 
 typedef struct _hydra_status {
 	/*
+	 * Define what we are dealing with here
+	 */
+	uint16_t no_controls;
+	uint16_t no_sensors;
+	/*
 	 * LED Display variables
 	 */
 	uint16_t led_bar_display_state;
-	uint32_t transistion_time;
+	uint32_t led_transistion_time;
 	led_bar_states_t led_bar_state;
     uint32_t led_bar_last_update;
     uint16_t loop_count;
@@ -125,7 +130,7 @@ typedef struct _hydra_status {
     uint32_t last_switch_time;
     uint16_t power_down_led;
     uint16_t transisition_step;
-    uint16_t tansistion_time;
+    uint16_t ui_transistion_time;
     /*
      * Hydra Display
      */
@@ -203,6 +208,7 @@ typedef struct _hydra_status {
     /*
      * Set if data is valid
      */
+    unsigned int time_set_with_NTP 				: 1;	// Host has set RTC with NTP
     unsigned int bsec_state_valid       		: 1;
     unsigned int led_bar_display_status         : 1;    // Should we show status on the level bar - Off when operating on Battery
     unsigned int ev_display_scan_mode           : 1;    // Running led "Scanning process"

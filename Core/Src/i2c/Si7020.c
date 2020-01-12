@@ -258,7 +258,7 @@ bool Si7020_get_temp(float *temp, float *humidity)
         return false;
     }
 
-    HAL_delay( 25 );    // Wait for device to process
+    HAL_Delay( 25 );    // Wait for device to process
 
     result = i2c_read_sensor( I2C_Si7020, rx_buffer, 3 );
     if( result != true ) {

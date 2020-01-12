@@ -1,0 +1,2 @@
+hal_temperature_1913614964.c:71:6:init_temperature_1913614964	0	static
+hal_temperature_1913614964.c:80:14:sample_temperature_1913614964	8	static

@@ -62,14 +62,12 @@ void Error_Handler(void);
 #define Enable_Comm_Processor_3V3_GPIO_Port GPIOB
 #define SPI2_CLK___Not_Used_Pin GPIO_PIN_0
 #define SPI2_CLK___Not_Used_GPIO_Port GPIOA
-#define Charge_Status_Pin GPIO_PIN_1
-#define Charge_Status_GPIO_Port GPIOA
 #define Debug_TX_Pin GPIO_PIN_2
 #define Debug_TX_GPIO_Port GPIOA
 #define Debug_RX_Pin GPIO_PIN_3
 #define Debug_RX_GPIO_Port GPIOA
-#define SPI_SFLASH_CS_Pin GPIO_PIN_4
-#define SPI_SFLASH_CS_GPIO_Port GPIOA
+#define SPI_FLASH_CS_Pin GPIO_PIN_4
+#define SPI_FLASH_CS_GPIO_Port GPIOA
 #define SPI_SFLASH_CLK_Pin GPIO_PIN_5
 #define SPI_SFLASH_CLK_GPIO_Port GPIOA
 #define SPI_SFLASH_MISO_Pin GPIO_PIN_6

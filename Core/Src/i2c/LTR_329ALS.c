@@ -386,32 +386,3 @@ void calc_lux( float *lux_level, float *ir_level, float gain, uint8_t *rx_buffer
      */
 
 }
-void lux_test(void)
-{
-	char ch;
-	float lux_level, ir_level;
-	int16_t int_lux_level;
-	uint16_t count = 0, err_count=0;
-
-	printf( "Starting LUX Sensor test, type any character to abort testing\r\n" );
-
-	while( true ) {
-//		imx_kick_watchdog();
-/*
-		if( imx_get_ch( &ch ) ) {
-			printf( "Aborting LUX Test by user keystroke\r\n" );
-			return;
-		}
-*/
-		count++;
-		if( LTR_329ALS_get_lux_level( &lux_level, &ir_level ) ) {
-			int_lux_level = (uint16_t) lux_level;
-			printf( "LUX Level read: %u LUX\r\n", int_lux_level );
-		} else {
-		    err_count++;
-			printf( "Error %u Reading LUX out of %u\r\n", err_count, count );
-		}
-		HAL_Delay( 250 );
-
-	}
-}

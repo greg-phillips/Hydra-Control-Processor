@@ -40,6 +40,7 @@
 #include "system.h"
 #include "common.h"
 #include "structs.h"
+#include "memory_manager.h"
 #include "product.h"
 
 /******************************************************
@@ -72,7 +73,9 @@
 cp_control_sensor_block_t cb[ IMX_NO_CONTROLS ];
 cp_control_sensor_block_t sb[ IMX_NO_SENSORS ];
 
-sector_assignment_table_t sat;
+extern imx_control_sensor_block_t imx_controls_defaults[];
+extern imx_control_sensor_block_t imx_sensors_defaults[];
+extern hydra_status_t hs;
 /******************************************************
  *               Function Definitions
  ******************************************************/
@@ -83,14 +86,51 @@ sector_assignment_table_t sat;
   */
 void cs_init(void)
 {
+	int16_t sector;
+	uint16_t i;
 	/*
 	 * Start with clean data
 	 */
 	memset( &cb, 0x00, sizeof( cb ) );
 	memset( &sb, 0x00, sizeof( sb ) );
-	memset( &sat, 0x00, sizeof( sat ) );
 	/*
-	 * Use the values in FLASH to initialize the variable space
+	 * Use the values in FLASH to initialize the initial settings	 *
 	 */
-
+	for( i = 0; i < hs.no_controls; i++ ) {
+		memcpy( &cb[ i ].csb, &imx_controls_defaults[ i ], sizeof( imx_control_sensor_block_t) );
+	}
+	for( i = 0; i < hs.no_controls; i++ ) {
+		memcpy( &sb[ i ].csb, &imx_sensors_defaults[ i ], sizeof( imx_control_sensor_block_t) );
+	}
+	/*
+	 * Allocate initial FLASH sectors for each of these items
+	 */
+	for( i = 0; i < hs.no_controls; i++ ) {
+		sector = get_next_sector();
+		if( sector == -1 ) {
+			/*
+			 * This is broken - needs to be fixed before continuing. THIS IS A BUG
+			 */
+			return;
+		}
+		cb[ i ].start_sector = sector;
+		cb[ i ].start_offset = 0;
+		cb[ i ].end_sector = sector;
+		cb[ i ].end_offset = 0;
+		cb[ i ].count = 0;
+	}
+	for( i = 0; i < hs.no_sensors; i++ ) {
+		sector = get_next_sector();
+		if( sector == -1 ) {
+			/*
+			 * This is broken - needs to be fixed before continuing. THIS IS A BUG
+			 */
+			return;
+		}
+		sb[ i ].start_sector = sector;
+		sb[ i ].start_offset = 0;
+		sb[ i ].end_sector = sector;
+		sb[ i ].end_offset = 0;
+		sb[ i ].count = 0;
+	}
 }

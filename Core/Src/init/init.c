@@ -33,7 +33,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include "stm32g0xx_hal.h"
 
+#include "i2c_manager.h"
 #include "leds.h"
 
 /******************************************************
@@ -74,9 +76,12 @@
   */
 void system_init(void)
 {
+	uint32_t current_time;
 	/*
 	 * Initialize each of the sub systems
 	 */
 	led_init();
 	init_led_bar();
+	current_time = HAL_GetTick();
+	i2c_manager_init( current_time );
 }

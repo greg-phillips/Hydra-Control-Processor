@@ -1,0 +1,6 @@
+Si7020.c:135:10:Si7020_heater	16	static
+Si7020.c:167:10:Si7020_get_serial	24	static
+Si7020.c:244:6:Si7020_get_temp	32	static
+Si7020.c:75:6:init_Si7020	32	static
+Si7020.c:320:9:Si_crc	12	static
+Si7020.c:341:9:Si_crc8	0	static
