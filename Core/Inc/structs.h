@@ -95,11 +95,11 @@ typedef enum {
 typedef struct _sensor_control_block {
 	imx_control_sensor_block_t csb;
 	control_sensor_data_t csd;
+	uint32_t init_crc_value;
 	uint16_t start_sector;
 	uint16_t start_offset;
 	uint16_t end_sector;
-	uint16_t end_offset;
-	uint16_t count;		// This referes to the current sector NOT total count. Total Count is # sectors * number of readings in a sector + count
+	uint16_t count;		// This refers to the current sector NOT total count. Total Count is # sectors * number of readings in a sector + count
 } cp_control_sensor_block_t;
 
 typedef struct _sector_assignment_table {
@@ -208,6 +208,7 @@ typedef struct _hydra_status {
     /*
      * Set if data is valid
      */
+    unsigned int send_data_records_now			: 1;	// We have detected some records need to be sent NOW
     unsigned int time_set_with_NTP 				: 1;	// Host has set RTC with NTP
     unsigned int bsec_state_valid       		: 1;
     unsigned int led_bar_display_status         : 1;    // Should we show status on the level bar - Off when operating on Battery

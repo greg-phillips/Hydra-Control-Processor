@@ -38,6 +38,7 @@
 
 #include "structs.h"
 #include "spi_flash.h"
+#include "time.h"
 #include "memory_manager.h"
 /******************************************************
  *                      Macros
@@ -46,8 +47,15 @@
 /******************************************************
  *                    Constants
  ******************************************************/
-#define	NO_TSD_ENTRIES_PER_SECTOR	( 4096 - ( 4096 / 4 ) - 8 )		// 4096 Bytes in sector - each record 4 bytes - 8 Bytes for sector linking data
-#define	NO_EVT_ENTRIES_PER_SECTOR	( 4096 - ( 4096 / 8 ) - 8 )		// 4096 Bytes in sector - each record 8 bytes ( Time stamp and Data )- 8 Bytes for sector linking data
+#define SFLASH_SECTOR_SIZE			( 4096 )
+#define START_OF_DATA				( 0x400000 )
+#define TSD_RECORD_SIZE				( 4 )
+#define EVT_RECORD_SIZE				( 8 )
+#define	NO_TSD_ENTRIES_PER_SECTOR	( ( SFLASH_SECTOR_SIZE - 10 ) / TSD_RECORD_SIZE )		// SFLASH_SECTOR_SIZE Bytes in sector - each record 4 bytes - 8 Bytes for sector linking data
+#define	NO_EVT_ENTRIES_PER_SECTOR	( ( SFLASH_SECTOR_SIZE - 10 ) / EVT_RECORD_SIZE )		// SFLASH_SECTOR_SIZE Bytes in sector - each record 8 bytes ( Time stamp and Data )- 8 Bytes for sector linking data
+#define SECTOR_ID_ADDRESS			( 0xFF4 )
+#define NEXT_SECTOR_ADDRESS			( 0xFFA )
+#define CRC_ADDRESS					( 0xFFC )
 /******************************************************
  *                   Enumerations
  ******************************************************/
@@ -63,13 +71,14 @@
 /******************************************************
  *               Function Declarations
  ******************************************************/
-
+static void IMX_CRC_Init( uint32_t initial_value );
 /******************************************************
  *               Variable Definitions
  ******************************************************/
 sector_assignment_table_t sat;
 cp_control_sensor_block_t cb[ IMX_NO_CONTROLS ];
 cp_control_sensor_block_t sb[ IMX_NO_SENSORS ];
+extern CRC_HandleTypeDef hcrc;
 
 /******************************************************
  *               Function Definitions
@@ -82,43 +91,101 @@ cp_control_sensor_block_t sb[ IMX_NO_SENSORS ];
   */
 void save_tsd( imx_peripheral_type_t type, unit16_t entry, uint32_t value )
 {
-	uint16_t new_sector;
+	uint16_t new_sector, *end_sector, *count;
+	uint32_t *init_crc_value, device_id, sector_offset, utc_time;
 	control_sensor_data_t *csd;
 	imx_control_sensor_block_t *csb;
-	bool sample_driven, allocate_new_sector;
+	bool event_driven, allocate_new_sector;
 
 	allocate_new_sector = false;
-	sample_driven = false;
+	event_driven = false;
     if( type == IMX_CONTROLS ) {
     	csb = &cb[ 0 ].csb;
     	csd = &cd[ 0 ].csd;
+    	init_crc_value = &cb[ entry ].init_crc_value;
+		end_sector = &cb[ i ].end_sector;
+		count = cb[ i ].count;
         if( csb[ entry ].sample_rate != 0 ) {
-        	sample_driven = true;
         	if( cb[ entry ].count >= NO_TSD_ENTRIES_PER_SECTOR )
         		allocate_new_sector = true;
         } else {
+        	event_driven = true;
         	if( cb[ entry ].count >= NO_EVT_ENTRIES_PER_SECTOR )
         		allocate_new_sector = true;
         }
     } else {
     	csb = &sb[ 0 ].csb;
     	csd = &sb[ 0 ].csd;
+    	init_crc_value = &sb[ entry ].init_crc_value;
+		end_sector = &sb[ i ].end_sector;
+		count = sb[ i ].count;
         if( csb[ entry ].sample_rate != 0 ) {
-        	sample_driven = true;
         	if( sb[ entry ].count >= NO_TSD_ENTRIES_PER_SECTOR )
         		allocate_new_sector = true;
         } else {
+        	event_driven = true;
         	if( sb[ entry ].count >= NO_EVT_ENTRIES_PER_SECTOR )
         		allocate_new_sector = true;
         }
     }
+    /*
+     * Initialize the CRC controller
+     */
+    IMX_CRC_Init( *init_crc_value );
 
     if( allocate_new_sector == true ) {
-    	/*
-    	 * Calculate the CRC
-    	 */
-
     	new_sector = get_next_sector();
+    	/*
+    	 * Calculate the offset of this sector in the SFLASH
+    	 */
+    	sector_offset = START_OF_DATA + ( *end_sector * SFLASH_SECTOR_SIZE )
+    	/*
+    	 * Save device ID, new sector info, and CRC
+    	 */
+    	*init_crc_value = HAL_CRC_Accumulate(&hcrc, (uint32_t *)&csb[ entry ].id, 4 );
+    	sFLASH_WriteBuffer( &csb[ entry ].id, sector_offset + SECTOR_ID_ADDRESS, 4 );
+
+    	*init_crc_value = HAL_CRC_Accumulate(&hcrc, (uint32_t *)&new_sector, 2 );
+    	sFLASH_WriteBuffer( init_crc_value, sector_offset + NEXT_SECTOR_ADDRESS, 2 );
+
+    	sFLASH_WriteBuffer( &csb[ entry ].id, sector_offset + CRC_ADDRESS, 4 );
+
+    	*init_crc_value = 0xFFFFFFFF;
+        /*
+         * Initialize the CRC controller
+         */
+        IMX_CRC_Init( *init_crc_value );
+        *end_sector = new_sector;
+        *sector_offset = 0;
+        *count = 0;
+    }
+    /*
+     * Save the value to SFLASH
+     */
+    if( event_driven == true ) {
+    	/*
+    	 * Write out the time first.
+    	 */
+    	utc_time = get_utc_time();
+    	/*
+    	 * Add to CRC
+    	 */
+    	*init_crc_value = HAL_CRC_Accumulate(&hcrc, (uint32_t *)&utc_time, 4 );
+    	sFLASH_WriteBuffer( &csb[ entry ].id, sector_offset + ( *count * EVT_RECORD_SIZE ), 4 );
+    	/*
+    	 * Save Value
+    	 */
+    	*init_crc_value = HAL_CRC_Accumulate(&hcrc, (uint32_t *)&value, 4 );
+    	sFLASH_WriteBuffer( &value, sector_offset + ( *count * EVT_RECORD_SIZE ) + 4, 4 );
+    } else {
+    	/*
+    	 * Save Value
+    	 */
+    	*init_crc_value = HAL_CRC_Accumulate(&hcrc, (uint32_t *)&value, 4 );
+    	sFLASH_WriteBuffer( &value, sector_offset + ( *count * EVT_RECORD_SIZE ) + 4, 4 );
+    }
+    *count += 1;
+
 }
 /**
   * @brief	Initialize SFLASH data collection area
@@ -199,3 +266,28 @@ void free_sector( uint16_t sector )
 	bit_mask = 1 << ( sector & 0x1F );
 	sat.block[ sat_entry ] &= ~bit_mask;
 }
+/**
+  * @brief	Initialize CRC Unit with value
+  * @param  Initial Value
+  * @retval : None
+  */
+static void IMX_CRC_Init( uint32_t initial_value )
+{
+
+  /* USER CODE BEGIN CRC_Init 0 */
+
+  /* USER CODE END CRC_Init 0 */
+
+  /* USER CODE BEGIN CRC_Init 1 */
+
+  /* USER CODE END CRC_Init 1 */
+  hcrc.Instance = CRC;
+  hcrc.Init.DefaultPolynomialUse = DEFAULT_POLYNOMIAL_ENABLE;
+  hcrc.Init.DefaultInitValueUse = DEFAULT_INIT_VALUE_DISABLE;
+  hcrc.Init.InitValue = initial_value;
+  hcrc.Init.InputDataInversionMode = CRC_INPUTDATA_INVERSION_NONE;
+  hcrc.Init.OutputDataInversionMode = CRC_OUTPUTDATA_INVERSION_DISABLE;
+  hcrc.InputDataFormat = CRC_INPUTDATA_FORMAT_WORDS;
+  if (HAL_CRC_Init(&hcrc) != HAL_OK) {
+    printf( "Failed to initialize CRC Device\r\n" );
+  }

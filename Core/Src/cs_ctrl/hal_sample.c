@@ -392,11 +392,9 @@ void hal_sample( imx_peripheral_type_t type, uint32_t current_time )
             csd[ *active ].no_samples += 1;
             csd[ *active ].last_sample_time = current_time;
             /*
-             * See if the batch is ready to go
+             * See if the we need to wake up the Communications Processor to send
              */
             if( ( csd[ *active ].warning != csd[ *active ].last_warning ) ||
-                ( csd[ *active ].no_samples >= csb[ *active ].sample_batch_size ) ||
-                ( csd[ *active ].no_samples >= ( device_config.history_size - 2  ) ) || // We can't get any more in to this record
                 ( csd[ *active ].update_now == true ) ||
                 ( percent_change_detected == true ) ) {
 #ifdef PRINT_DEBUGS_FOR_SAMPLING
@@ -409,6 +407,7 @@ void hal_sample( imx_peripheral_type_t type, uint32_t current_time )
                 csd[ *active ].update_now = false;
                 csd[ *active ].last_warning = csd[ *active ].warning;
                 csd[ *active ].send_batch = true;    // Send this now
+                hs.send_data_records_now = true;
             }
         }
 	}

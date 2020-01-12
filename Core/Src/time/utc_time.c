@@ -1,5 +1,5 @@
 /*
- * Copyright 2020, iMatrix Systems, Inc. All Rights Reserved.
+ * Copyright 2020, iMatrix Systems, Inc.. All Rights Reserved.
  *
  * This software, associated documentation and materials ("Software"),
  * is owned by iMatrix Systems ("iMatrix") and is protected by and subject to
@@ -22,19 +22,20 @@
  * of such system or application assumes all risk of such use and in doing
  * so agrees to indemnify iMatrix against all liability.
  */
-#ifndef _H_
-#define _H_
 
-/** @file .h
+/** @file .c
  *
  *  Created on: January 10, 2020
  *      Author: greg.phillips
  *
  */
-/*
- *	Defines for
- *
- */
+
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <time.h>
+
+#include "stm32g0xx_hal_conf.h"
 
 /******************************************************
  *                      Macros
@@ -57,7 +58,38 @@
  ******************************************************/
 
 /******************************************************
- *               Function Definitions
+ *               Function Declarations
  ******************************************************/
 
-#endif /* _H_ */
+/******************************************************
+ *               Variable Definitions
+ ******************************************************/
+extern RTC_HandleTypeDef hrtc;
+
+/******************************************************
+ *               Function Definitions
+ ******************************************************/
+/**
+  * @brief
+  * @param  None
+  * @retval : None
+  */
+uint32_t get_current_utc(void)
+{
+	struct tm t;
+	RTC_TimeTypeDef sTime;
+	RTC_DateTypeDef sDate;
+
+	HAL_RTC_GetTime( &hrtc, &sTime, RTC_FORMAT_BIN );
+	HAL_RTC_GetDate( &hrtc, &sDate, RTC_FORMAT_BIN );
+
+	t.tm_year = sDate.Year;
+	t.tm_mon = sDate.Month;
+	t.tm_mday = sDate.Date;
+	t.tm_hour = sTime.Hours;
+	t.tm_min = sTime.Minutes;
+	t.tm_sec = sTime.Seconds;
+
+	return mktime(&t);
+
+}

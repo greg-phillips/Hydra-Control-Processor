@@ -1,3 +1,0 @@
-memory_manager.c:81:6:init_sat	16	static
-memory_manager.c:102:9:get_next_sector	16	static
-memory_manager.c:135:6:free_sector	8	static

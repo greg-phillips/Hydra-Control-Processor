@@ -113,6 +113,7 @@ void cs_init(void)
 			 */
 			return;
 		}
+		init_crc_value = 0xFFFFFFFF;
 		cb[ i ].start_sector = sector;
 		cb[ i ].start_offset = 0;
 		cb[ i ].end_sector = sector;

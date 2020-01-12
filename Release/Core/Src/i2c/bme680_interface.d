@@ -26,6 +26,8 @@ Core/Src/i2c/bme680_interface.o: ../Core/Src/i2c/bme680_interface.c \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_ll_adc.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_adc_ex.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_adc_ex.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_crc.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_crc_ex.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_exti.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_flash.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_flash_ex.h \
@@ -104,6 +106,10 @@ Core/Src/i2c/bme680_interface.o: ../Core/Src/i2c/bme680_interface.c \
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_adc_ex.h:
 
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_adc_ex.h:
+
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_crc.h:
+
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_crc_ex.h:
 
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_exti.h:
 

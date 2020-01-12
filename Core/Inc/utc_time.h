@@ -22,17 +22,18 @@
  * of such system or application assumes all risk of such use and in doing
  * so agrees to indemnify iMatrix against all liability.
  */
-#ifndef _H_
-#define _H_
+#ifndef UTC_TIME_H_
+#define UTC_TIME_H_
 
-/** @file .h
+/** @file utc_time.h
  *
  *  Created on: January 10, 2020
  *      Author: greg.phillips
  *
+ *	UTC Time functions
  */
 /*
- *	Defines for
+ *	Defines for utc_time.c
  *
  */
 
@@ -59,5 +60,5 @@
 /******************************************************
  *               Function Definitions
  ******************************************************/
-
-#endif /* _H_ */
+uint32_t get_current_utc(void);
+#endif /* UTC_TIME_H_ */
