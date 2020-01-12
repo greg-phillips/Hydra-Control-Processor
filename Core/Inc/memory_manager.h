@@ -59,6 +59,7 @@
 /******************************************************
  *               Function Definitions
  ******************************************************/
+void save_tsd( imx_peripheral_type_t type, uint16_t entry, uint32_t value );
 void init_sat(void);
 int16_t get_next_sector(void);
 void free_sector( uint16_t sector );

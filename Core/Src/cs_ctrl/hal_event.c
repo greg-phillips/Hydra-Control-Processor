@@ -44,6 +44,8 @@
 
 #include "common.h"
 #include "structs.h"
+#include "product.h"
+#include "utc_time.h"
 #include "ck_time.h"
 #include "hal_sample.h"
 #include "hal_event.h"
@@ -81,6 +83,7 @@
  *               Variable Definitions
  ******************************************************/
 extern hydra_status_t hs;
+sample_status_t sample_status;
 cp_control_sensor_block_t cb[ IMX_NO_CONTROLS ];
 cp_control_sensor_block_t sb[ IMX_NO_SENSORS ];
 /******************************************************
@@ -100,21 +103,22 @@ void hal_event( imx_peripheral_type_t type, uint16_t entry, void *value )
 	bool percent_change_detected;
 	control_sensor_data_t *csd;
 	imx_control_sensor_block_t *csb;
-	wiced_time_t current_time;
-	wiced_utc_time_t upload_utc_time;
+	uint32_t current_time;
+	uint32_t upload_utc_time;
 	var_data_entry_t *var_data;
+	imx_var_data_header_t header;
 
 	wiced_time_get_time( &current_time );
 
 	if( type == IMX_CONTROLS ) {
-		if( entry >= device_config.no_controls )    // reporting no valid device
+		if( entry >= sample_status.no_controls )    // reporting no valid device
 			return;	// Nothing to do
 		else {
 			csd = &cb[ 0 ].csd;
 			csb = &cb[ 0 ].csb;
 		}
 	} else {
-		if( entry >= device_config.no_sensors )
+		if( entry >= sample_status.no_sensors )
 			return;	// Nothing to do
 		else {
 			csd = &sb[ 0 ].csd;
@@ -122,15 +126,7 @@ void hal_event( imx_peripheral_type_t type, uint16_t entry, void *value )
 		}
 	}
 	PRINTF( "Event - Setting %s %u Data @: 0x%08lx\r\n", type == IMX_CONTROLS ? "Control" : "Sensor", entry, (uint32_t) &csd[ entry ] );
-	/*
-	 * Event Driven saves Time Stamp & Value pair
-	 */
-    if( hs.time_set_with_NTP == true ) {
-        wiced_time_get_utc_time( &upload_utc_time );
-    } else
-        upload_utc_time = 0;        // Tell iMatrix to assign
 
-    memcpy( &csd[ entry ].data[ csd[ entry ].no_samples ],  &upload_utc_time, IMX_SAMPLE_LENGTH );
     /*
      * Add Data
      */
@@ -168,10 +164,36 @@ void hal_event( imx_peripheral_type_t type, uint16_t entry, void *value )
 
     } else {
         /*
+         * Update value with any calibration settings
+         */
+        if( csb[ *active ].calibration_value.uint_32bit != 0 ) {
+            /*
+             * Make Adjustment based on type
+             */
+            if( csb[ *active ].data_type == IMX_INT32 )
+                csd[ *active ].last_value.int_32bit = csd[ *active ].last_raw_value.int_32bit + csb[ *active ].calibration_value.int_32bit;
+            else if( csb[ *active ].data_type == IMX_FLOAT )
+                csd[ *active ].last_value.float_32bit = csd[ *active ].last_raw_value.float_32bit + csb[ *active ].calibration_value.float_32bit;
+            else {
+                /*
+                 * Make sure value does not go negative
+                 */
+                if( ( (int32_t) ( csd[ *active ].last_value.uint_32bit ) + csb[ *active ].calibration_value.int_32bit ) < 0 )
+                    csd[ *active ].last_value.uint_32bit = 0;
+                else
+                    csd[ *active ].last_value.int_32bit += csb[ *active ].calibration_value.int_32bit;
+            }
+        } else {
+            csd[ *active ].last_value.int_32bit = csd[ *active ].last_raw_value.int_32bit;
+        }
+        /*
          * All Other Data is really just 32 bit
          */
         csd[ entry ].no_samples += 1;
-        memcpy( &csd[ entry ].data[ csd[ entry ].no_samples ].uint_32bit, value, IMX_SAMPLE_LENGTH );
+        /*
+         * Add to the SFLASH Data Store
+         */
+    	save_evt( type, *active, csd[ *active ].last_value.uint_32bit ); // Save this entry its all just 32 bit data
     }
 
     /*

@@ -92,14 +92,22 @@ typedef enum {
     LED_BAR_SCAN_RIGHT,
 } led_bar_states_t;
 
-typedef struct _sensor_control_block {
-	imx_control_sensor_block_t csb;
-	control_sensor_data_t csd;
+typedef struct _data_store_info {
 	uint32_t init_crc_value;
 	uint16_t start_sector;
 	uint16_t start_offset;
 	uint16_t end_sector;
 	uint16_t count;		// This refers to the current sector NOT total count. Total Count is # sectors * number of readings in a sector + count
+} data_store_info_t;
+
+typedef struct _sensor_control_block {
+	imx_control_sensor_block_t csb;
+	control_sensor_data_t csd;
+	data_store_info_t data;
+	/*
+	 * Optional variables only used when data is of Variable Length
+	 */
+	data_store_info_t var_data;
 } cp_control_sensor_block_t;
 
 typedef struct _sector_assignment_table {
@@ -202,6 +210,10 @@ typedef struct _hydra_status {
     uint32_t false_lux_count;
     uint32_t iaq_baseline;
     uint32_t spi_errors;
+    /*
+     * SFlash statistics
+     */
+    uint32_t erase_cycles;
 
     uint8_t bsec_state[ BSEC_MAX_PROPERTY_BLOB_SIZE ];
     uint8_t bsec_config[ BSEC_MAX_PROPERTY_BLOB_SIZE ];

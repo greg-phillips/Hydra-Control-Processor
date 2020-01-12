@@ -44,6 +44,8 @@
 
 #include "structs.h"
 #include "ck_time.h"
+#include "memory_manager.h"
+#include "product.h"
 #include "hal_sample.h"
 /******************************************************
  *                      Macros
@@ -93,8 +95,8 @@ sample_status_t sample_status;
 uint16_t active_sensor;
 uint16_t active_control;
 extern hydra_status_t hs;
-extern control_sensor_data_t *cd;
-extern control_sensor_data_t *sd;
+cp_control_sensor_block_t cb[ IMX_NO_CONTROLS ];
+cp_control_sensor_block_t sb[ IMX_NO_SENSORS ];
 extern imx_functions_t imx_control_functions[], imx_sensor_functions[];
 /******************************************************
  *               Function Definitions
@@ -174,7 +176,7 @@ void hal_sample( imx_peripheral_type_t type, uint32_t current_time )
             return;
         else {
             csb = &cb[ 0 ].csb;
-            csd = &cd[ 0 ].csd;
+            csd = &cb[ 0 ].csd;
             f = &imx_control_functions[ 0 ];
         }
     } else {
@@ -236,7 +238,7 @@ void hal_sample( imx_peripheral_type_t type, uint32_t current_time )
 	                 * see if change in error or all we are getting is errors. - Only send once per batch
 	                 */
 	                if( ( csd[ *active ].error != csd[ *active ].last_error ) ||
-	                    ( imx_is_later( current_time, csd[ *active ].last_sample_time + (wiced_time_t) ( (uint32_t) csb[ *active ].sample_batch_size * 1000L  ) ) == true ) ) {
+	                    ( imx_is_later( current_time, csd[ *active ].last_sample_time + ( (uint32_t) csb[ *active ].sample_batch_size * 1000L  ) ) == true ) ) {
 	    /*
 	     *
 	                    print_status( "Error: %u, Last Error: %u, current_time: %lu, time difference: %lu\r\n", csd[ *active ].error, csd[ *active ].last_error, csd[ *active ].last_sample_time,
@@ -263,7 +265,7 @@ void hal_sample( imx_peripheral_type_t type, uint32_t current_time )
                  * see if change in error or all we are getting is errors. - Only send once per batch
                  */
                 if( ( csd[ *active ].error != csd[ *active ].last_error ) ||
-                    ( imx_is_later( current_time, csd[ *active ].last_sample_time + (wiced_time_t) ( (uint32_t) csb[ *active ].sample_batch_size * 1000L  ) ) == true ) ) {
+                    ( imx_is_later( current_time, csd[ *active ].last_sample_time + ( (uint32_t) csb[ *active ].sample_batch_size * 1000L  ) ) == true ) ) {
     /*
      *
                     print_status( "Error: %u, Last Error: %u, current_time: %lu, time difference: %lu\r\n", csd[ *active ].error, csd[ *active ].last_error, csd[ *active ].last_sample_time,
@@ -381,10 +383,13 @@ void hal_sample( imx_peripheral_type_t type, uint32_t current_time )
          *
          */
         if( ( ( csb[ *active ].send_imatrix == true ) && ( csd[ *active ].valid == true ) ) &&
-            ( ( imx_is_later( current_time, csd[ *active ].last_sample_time + (wiced_time_t) ( csb[ *active ].sample_rate ) ) == true ) ||
+            ( ( imx_is_later( current_time, csd[ *active ].last_sample_time + ( csb[ *active ].sample_rate ) ) == true ) ||
             ( csd[ *active ].warning != csd[ *active ].last_warning ) ||
             ( percent_change_detected == true ) ||
             ( csd[ *active ].send_on_error == true ) ) ) {
+        	/*
+        	 * Add to the SFLASH Data store
+        	 */
         	save_tsd( type, *active, csd[ *active ].last_value.uint_32bit ); // Save this entry its all just 32 bit data
 /*
             imx_printf( "Saving %s value for sensor(%u): %s, Saved entries: %u\r\n", type == IMX_CONTROLS ? "Control" : "Sensor", *active, csb[ *active ].name, ( csd[ *active ].no_samples + 1 ) );
@@ -454,4 +459,4 @@ bool check_float_percent( float current_value, float last_value, uint16_t percen
 //	print_status( "With in range\r\n" );
 	return false;
 }
-}
+
