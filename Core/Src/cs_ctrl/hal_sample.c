@@ -69,13 +69,6 @@
 /******************************************************
  *                 Type Definitions
  ******************************************************/
-typedef struct _sample_status {
-    uint16_t active_ble_device;
-    uint16_t no_controls, no_sensors;
-    unsigned int end_of_controls            : 1;
-    unsigned int end_of_sensors             : 1;
-    unsigned int skip_sampling              : 1;
-} sample_status_t;    // This will be zeroed on start up
 
 /******************************************************
  *                    Structures
@@ -390,7 +383,7 @@ void hal_sample( imx_peripheral_type_t type, uint32_t current_time )
         	/*
         	 * Add to the SFLASH Data store
         	 */
-        	save_tsd( type, *active, csd[ *active ].last_value.uint_32bit ); // Save this entry its all just 32 bit data
+        	save_tsd_evt( type, *active, csd[ *active ].last_value.uint_32bit ); // Save this entry its all just 32 bit data
 /*
             imx_printf( "Saving %s value for sensor(%u): %s, Saved entries: %u\r\n", type == IMX_CONTROLS ? "Control" : "Sensor", *active, csb[ *active ].name, ( csd[ *active ].no_samples + 1 ) );
 */

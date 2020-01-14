@@ -1,0 +1,5 @@
+memory_manager.c:99:6:save_tsd_evt	64	static
+memory_manager.c:228:6:init_sat	16	static
+memory_manager.c:249:9:get_next_sector	24	static
+memory_manager.c:282:6:free_sector	24	static
+memory_manager.c:305:13:IMX_CRC_Init	16	static

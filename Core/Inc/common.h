@@ -463,6 +463,11 @@ typedef struct var_data_entry {
     uint8_t *data;
 } var_data_entry_t;
 
+typedef struct cp_var_data_entry {
+    uint16_t length;
+    uint8_t data[];
+} cp_var_data_entry_t;
+
 typedef struct var_data_block {
     var_data_entry_t *head;
     var_data_entry_t *tail;

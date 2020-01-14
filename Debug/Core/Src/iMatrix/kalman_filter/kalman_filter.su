@@ -1,0 +1,2 @@
+kalman_filter.c:85:6:imx_kalman_filter_init	24	static
+kalman_filter.c:93:7:imx_kalman_filter_update_estimate	48	static

@@ -62,7 +62,7 @@
  *               Function Definitions
  ******************************************************/
 void hal_sample_init(void);
-void hal_sample( imx_peripheral_type_t type, wiced_time_t current_time );
+void hal_sample( imx_peripheral_type_t type, uint32_t current_time );
 bool check_int_percent( int32_t current_value, int32_t last_value, uint16_t percentage );
 bool check_uint_percent( uint32_t current_value, uint32_t last_value, uint16_t percentage );
 bool check_float_percent( float current_value, float last_value, uint16_t percentage );

@@ -1,0 +1,5 @@
+hal_sample.c:108:6:hal_sample_init	8	static
+hal_sample.c:125:6:hal_sample	80	static
+hal_sample.c:422:6:check_int_percent	24	static
+hal_sample.c:435:6:check_uint_percent	24	static
+hal_sample.c:443:6:check_float_percent	24	static

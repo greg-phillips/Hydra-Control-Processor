@@ -97,17 +97,26 @@ typedef struct _data_store_info {
 	uint16_t start_sector;
 	uint16_t start_offset;
 	uint16_t end_sector;
-	uint16_t count;		// This refers to the current sector NOT total count. Total Count is # sectors * number of readings in a sector + count
+	/*
+	 * The count refers to the current sector NOT total count.
+	 * For Variable length records this represents the actual byte count used in the sector
+	 * For Total Count is # sectors * number of readings in a sector + count and is also stored in the no_samples variable in the control_sensor_data_t structure
+	 */
+	uint16_t count;
 } data_store_info_t;
+
+typedef struct _sample_status {
+    uint16_t active_ble_device;
+    uint16_t no_controls, no_sensors;
+    unsigned int end_of_controls            : 1;
+    unsigned int end_of_sensors             : 1;
+    unsigned int skip_sampling              : 1;
+} sample_status_t;    // This will be zeroed on start up
 
 typedef struct _sensor_control_block {
 	imx_control_sensor_block_t csb;
 	control_sensor_data_t csd;
 	data_store_info_t data;
-	/*
-	 * Optional variables only used when data is of Variable Length
-	 */
-	data_store_info_t var_data;
 } cp_control_sensor_block_t;
 
 typedef struct _sector_assignment_table {

@@ -1,0 +1,3 @@
+sps30_interface.c:83:6:init_SPS30	72	static
+sps30_interface.c:144:6:start_particulate_matter_measurement	24	static
+sps30_interface.c:155:6:update_particulate_matter	64	static

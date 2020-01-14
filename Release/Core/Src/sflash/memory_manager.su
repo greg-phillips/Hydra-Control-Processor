@@ -1,4 +1,4 @@
-memory_manager.c:96:6:save_tsd	64	static
-memory_manager.c:201:6:init_sat	16	static
-memory_manager.c:222:9:get_next_sector	16	static
-memory_manager.c:255:6:free_sector	8	static
+memory_manager.c:99:6:save_tsd_evt	72	static
+memory_manager.c:228:6:init_sat	16	static
+memory_manager.c:249:9:get_next_sector	16	static
+memory_manager.c:282:6:free_sector	8	static

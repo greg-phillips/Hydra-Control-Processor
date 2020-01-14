@@ -51,12 +51,14 @@
 /******************************************************
  *                    Constants
  ******************************************************/
+#define SECTOR_OVERHEAD				( 10 )
 #define SFLASH_SECTOR_SIZE			( 4096 )
+#define MAX_SECTOR_DATA_SIZE		( SFLASH_SECTOR_SIZE - SECTOR_OVERHEAD )
 #define START_OF_DATA				( 0x400000 )
 #define TSD_RECORD_SIZE				( 4 )
 #define EVT_RECORD_SIZE				( 8 )
-#define	NO_TSD_ENTRIES_PER_SECTOR	( ( SFLASH_SECTOR_SIZE - 10 ) / TSD_RECORD_SIZE )		// SFLASH_SECTOR_SIZE Bytes in sector - each record 4 bytes - 8 Bytes for sector linking data
-#define	NO_EVT_ENTRIES_PER_SECTOR	( ( SFLASH_SECTOR_SIZE - 10 ) / EVT_RECORD_SIZE )		// SFLASH_SECTOR_SIZE Bytes in sector - each record 8 bytes ( Time stamp and Data )- 8 Bytes for sector linking data
+#define	NO_TSD_ENTRIES_PER_SECTOR	( ( SFLASH_SECTOR_SIZE - SECTOR_OVERHEAD ) / TSD_RECORD_SIZE )		// SFLASH_SECTOR_SIZE Bytes in sector - each record 4 bytes - 8 Bytes for sector linking data
+#define	NO_EVT_ENTRIES_PER_SECTOR	( ( SFLASH_SECTOR_SIZE - SECTOR_OVERHEAD ) / EVT_RECORD_SIZE )		// SFLASH_SECTOR_SIZE Bytes in sector - each record 8 bytes ( Time stamp and Data )- 8 Bytes for sector linking data
 #define SECTOR_ID_ADDRESS			( 0xFF4 )
 #define NEXT_SECTOR_ADDRESS			( 0xFFA )
 #define CRC_ADDRESS					( 0xFFC )
@@ -87,159 +89,60 @@ extern hydra_status_t hs;
 /******************************************************
  *               Function Definitions
  ******************************************************/
+
 /**
-  * @brief	Save a TSD entry to SFLASH
+  * @brief	Save a TSD or Event Driven entry to SFLASH
   * check if there is space in the current sector, if not allocate a new sector and add index, CRC to the last 10 bytes
   * @param  type of device Control / Sensor, entry number in array, value
   * @retval : None
   */
-void save_tsd( imx_peripheral_type_t type, uint16_t entry, uint32_t value )
+void save_tsd_evt( imx_peripheral_type_t type, uint16_t entry, uint32_t value )
 {
-	uint16_t new_sector, *end_sector, *count;
+	uint16_t new_sector, *end_sector, *count, var_data_length;
 	uint32_t *init_crc_value, byte_offset, utc_time;
+	cp_var_data_entry_t *var_data;
 	imx_control_sensor_block_t *csb;
 	bool event_driven, allocate_new_sector;
 
 	allocate_new_sector = false;
 	event_driven = false;
-    if( type == IMX_CONTROLS ) {
-    	csb = &cb[ 0 ].csb;
-    	init_crc_value = &cb[ entry ].data.init_crc_value;
-		end_sector = &cb[ entry ].data.end_sector;
-		count = &cb[ entry ].data.count;
-        if( csb[ entry ].sample_rate != 0 ) {
-        	if( cb[ entry ].data.count >= NO_TSD_ENTRIES_PER_SECTOR )
-        		allocate_new_sector = true;
-        } else {
-        	event_driven = true;
-        	if( cb[ entry ].data.count >= NO_EVT_ENTRIES_PER_SECTOR )
-        		allocate_new_sector = true;
-        }
-    } else {
-    	csb = &sb[ 0 ].csb;
-    	init_crc_value = &sb[ entry ].data.init_crc_value;
-		end_sector = &sb[ entry ].data.end_sector;
-		count = &sb[ entry ].data.count;
-        if( csb[ entry ].sample_rate != 0 ) {
-        	if( sb[ entry ].data.count >= NO_TSD_ENTRIES_PER_SECTOR )
-        		allocate_new_sector = true;
-        } else {
-        	event_driven = true;
-        	if( sb[ entry ].data.count >= NO_EVT_ENTRIES_PER_SECTOR )
-        		allocate_new_sector = true;
-        }
-    }
-    /*
-     * Initialize the CRC controller
-     */
-    IMX_CRC_Init( *init_crc_value );
-    /*
-     * Calculate the byte offset in the FLASH based on the sector we are using
-     */
-	byte_offset = START_OF_DATA + ( *end_sector * SFLASH_SECTOR_SIZE );
-
-    if( allocate_new_sector == true ) {
-    	new_sector = get_next_sector();
-    	/*
-    	 * Save device ID, new sector info, and CRC
-    	 */
-    	*init_crc_value = HAL_CRC_Accumulate(&hcrc, (uint32_t *)&csb[ entry ].id, 4 );
-    	sFLASH_WriteBuffer( (uint8_t *) &csb[ entry ].id, byte_offset + SECTOR_ID_ADDRESS, 4 );
-
-    	*init_crc_value = HAL_CRC_Accumulate(&hcrc, (uint32_t *)&new_sector, 2 );
-    	sFLASH_WriteBuffer( (uint8_t *) &init_crc_value, byte_offset + NEXT_SECTOR_ADDRESS, 2 );
-
-    	sFLASH_WriteBuffer( (uint8_t *) &csb[ entry ].id, byte_offset + CRC_ADDRESS, 4 );
-
-    	*init_crc_value = 0xFFFFFFFF;
-        /*
-         * Initialize the CRC controller
-         */
-        IMX_CRC_Init( *init_crc_value );
-        *end_sector = new_sector;
-        /*
-         * re-Calculate the byte offset in the FLASH based on the sector we are using
-         */
-    	byte_offset = START_OF_DATA + ( *end_sector * SFLASH_SECTOR_SIZE );
-    }
-    /*
-     * Save the value to SFLASH
-     */
-    if( event_driven == true ) {
-    	/*
-    	 * Write out the time first.
-    	 */
-    	utc_time = get_current_utc();
-    	/*
-    	 * Add to CRC
-    	 */
-    	*init_crc_value = HAL_CRC_Accumulate(&hcrc, (uint32_t *)&utc_time, 4 );
-    	sFLASH_WriteBuffer( (uint8_t *) &csb[ entry ].id, byte_offset + ( *count * EVT_RECORD_SIZE ), 4 );
-    	/*
-    	 * Save Value
-    	 */
-    	*init_crc_value = HAL_CRC_Accumulate(&hcrc, (uint32_t *)&value, 4 );
-    	sFLASH_WriteBuffer( (uint8_t *) &value, byte_offset + ( *count * EVT_RECORD_SIZE ) + 4, 4 );
-    } else {
-    	/*
-    	 * Save Value
-    	 */
-    	*init_crc_value = HAL_CRC_Accumulate(&hcrc, (uint32_t *)&value, 4 );
-    	sFLASH_WriteBuffer( (uint8_t *) &value, byte_offset + ( *count * EVT_RECORD_SIZE ) + 4, 4 );
-    }
-    *count += 1;
-
-}
-
-/**
-  * @brief	Save a Event Driven entry to SFLASH
-  * check if there is space in the current sector, if not allocate a new sector and add index, CRC to the last 10 bytes
-  * @param  type of device Control / Sensor, entry number in array, value
-  * @retval : None
-  */
-void save_evt( imx_peripheral_type_t type, uint16_t entry, uint32_t value )
-{
-	uint16_t new_sector, *end_sector, *count;
-	uint32_t *init_crc_value, byte_offset, utc_time;
-	imx_control_sensor_block_t *csb;
-	bool event_driven, allocate_new_sector;
-
-	allocate_new_sector = false;
-	event_driven = false;
+	var_data = 0x00;		// To prevent compiler warning - this is initialized below if this is var data
 	/*
 	 * Event Driven saves Time Stamp & Value pair
 	 */
 	if( hs.time_set_with_NTP == true ) {
-		upload_utc_time = get_current_utc();
+		utc_time = get_current_utc();
 	} else
-	    upload_utc_time = 0;        // Tell iMatrix to assign
+		utc_time = 0;        // Tell iMatrix to assign
 
     if( type == IMX_CONTROLS ) {
     	csb = &cb[ 0 ].csb;
     	init_crc_value = &cb[ entry ].data.init_crc_value;
 		end_sector = &cb[ entry ].data.end_sector;
 		count = &cb[ entry ].data.count;
-        if( csb[ entry ].sample_rate != 0 ) {
-        	if( cb[ entry ].data.count >= NO_TSD_ENTRIES_PER_SECTOR )
-        		allocate_new_sector = true;
-        } else {
-        	event_driven = true;
-        	if( cb[ entry ].data.count >= NO_EVT_ENTRIES_PER_SECTOR )
-        		allocate_new_sector = true;
-        }
     } else {
     	csb = &sb[ 0 ].csb;
     	init_crc_value = &sb[ entry ].data.init_crc_value;
 		end_sector = &sb[ entry ].data.end_sector;
 		count = &sb[ entry ].data.count;
-        if( csb[ entry ].sample_rate != 0 ) {
-        	if( sb[ entry ].data.count >= NO_TSD_ENTRIES_PER_SECTOR )
-        		allocate_new_sector = true;
-        } else {
-        	event_driven = true;
-        	if( sb[ entry ].data.count >= NO_EVT_ENTRIES_PER_SECTOR )
-        		allocate_new_sector = true;
-        }
+    }
+    if( csb[ entry ].data_type == IMX_VARIABLE_LENGTH ) {
+    	/*
+    	 * For variable length records the count is actually the BYTE count not the number of records
+    	 */
+    	var_data = (cp_var_data_entry_t *) value;
+    	var_data_length = var_data->length;
+    	if( ( *count + var_data_length + 2 ) >= MAX_SECTOR_DATA_SIZE )
+			allocate_new_sector = true;
+    } else {
+    	if( csb[ entry ].sample_rate != 0 ) {
+    		if( *count >= NO_TSD_ENTRIES_PER_SECTOR )
+    			allocate_new_sector = true;
+    	} else {
+    		event_driven = true;
+    		if( *count >= NO_EVT_ENTRIES_PER_SECTOR )
+    			allocate_new_sector = true;
+    	}
     }
     /*
      * Initialize the CRC controller
@@ -273,36 +176,47 @@ void save_evt( imx_peripheral_type_t type, uint16_t entry, uint32_t value )
          * re-Calculate the byte offset in the FLASH based on the sector we are using
          */
     	byte_offset = START_OF_DATA + ( *end_sector * SFLASH_SECTOR_SIZE );
+    	/*
+    	 * Reset the start point in the sector
+    	 */
+    	*count = 0;
     }
     /*
      * Save the value to SFLASH
      */
+    byte_offset += *count * EVT_RECORD_SIZE;
+
     if( event_driven == true ) {
     	/*
     	 * Write out the time first.
-    	 */
-    	utc_time = get_current_utc();
-    	/*
     	 * Add to CRC
     	 */
     	*init_crc_value = HAL_CRC_Accumulate(&hcrc, (uint32_t *)&utc_time, 4 );
-    	sFLASH_WriteBuffer( (uint8_t *) &csb[ entry ].id, byte_offset + ( *count * EVT_RECORD_SIZE ), 4 );
+    	sFLASH_WriteBuffer( (uint8_t *) &csb[ entry ].id, byte_offset, 4 );
     	/*
     	 * Save Value
     	 */
-    	*init_crc_value = HAL_CRC_Accumulate(&hcrc, (uint32_t *)&value, 4 );
-    	sFLASH_WriteBuffer( (uint8_t *) &value, byte_offset + ( *count * EVT_RECORD_SIZE ) + 4, 4 );
+    	if( csb[ entry ].data_type == IMX_VARIABLE_LENGTH ) {
+    		*init_crc_value = HAL_CRC_Accumulate(&hcrc, (uint32_t *)&var_data_length, 2 );
+    		sFLASH_WriteBuffer( (uint8_t *) &var_data_length, byte_offset + 4, 2 );
+    		*init_crc_value = HAL_CRC_Accumulate(&hcrc, (uint32_t *)&var_data->data, var_data_length );
+    		sFLASH_WriteBuffer( (uint8_t *) &var_data->data, byte_offset + 6, var_data_length );
+    	    *count += var_data_length + 2;
+    	} else {
+    		*init_crc_value = HAL_CRC_Accumulate(&hcrc, (uint32_t *)&value, 4 );
+    		sFLASH_WriteBuffer( (uint8_t *) &value, byte_offset + 4, 4 );
+    	    *count += 1;
+    	}
     } else {
     	/*
     	 * Save Value
     	 */
     	*init_crc_value = HAL_CRC_Accumulate(&hcrc, (uint32_t *)&value, 4 );
-    	sFLASH_WriteBuffer( (uint8_t *) &value, byte_offset + ( *count * EVT_RECORD_SIZE ) + 4, 4 );
+    	sFLASH_WriteBuffer( (uint8_t *) &value, byte_offset, 4 );
+        *count += 1;
     }
-    *count += 1;
 
 }
-
 /**
   * @brief	Initialize SFLASH data collection area
   * The Sector Assignment Table (A section RAM that maps to sectors in the SFLASH) is used to

@@ -119,21 +119,6 @@ void cs_init(void)
 		cb[ i ].data.start_offset = 0;
 		cb[ i ].data.end_sector = sector;
 		cb[ i ].data.count = 0;
-		if( cb[ i ].csb.data_type == IMX_VARIABLE_LENGTH ) {
-			sector = get_next_sector();
-			if( sector == -1 ) {
-				/*
-				 * This is broken - needs to be fixed before continuing. THIS IS A BUG
-				 */
-				return;
-			}
-			cb[ i ].var_data.init_crc_value = 0xFFFFFFFF;
-			cb[ i ].var_data.start_sector = sector;
-			cb[ i ].var_data.start_offset = 0;
-			cb[ i ].var_data.end_sector = sector;
-			cb[ i ].var_data.count = 0;
-
-		}
 	}
 	for( i = 0; i < hs.no_sensors; i++ ) {
 		sector = get_next_sector();
@@ -149,20 +134,5 @@ void cs_init(void)
 		sb[ i ].data.start_offset = 0;
 		sb[ i ].data.end_sector = sector;
 		sb[ i ].data.count = 0;
-		if( sb[ i ].csb.data_type == IMX_VARIABLE_LENGTH ) {
-			sector = get_next_sector();
-			if( sector == -1 ) {
-				/*
-				 * This is broken - needs to be fixed before continuing. THIS IS A BUG
-				 */
-				return;
-			}
-			sb[ i ].var_data.init_crc_value = 0xFFFFFFFF;
-			sb[ i ].var_data.start_sector = sector;
-			sb[ i ].var_data.start_offset = 0;
-			sb[ i ].var_data.end_sector = sector;
-			sb[ i ].var_data.count = 0;
-
-		}
 	}
 }

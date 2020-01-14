@@ -1,0 +1,10 @@
+bme680_interface.c:110:6:init_BME680	1392	static
+bme680_interface.c:211:6:get_environmental_sensor_measurement	80	static
+bme680_interface.c:346:8:bus_write	72	static
+bme680_interface.c:376:8:bus_read	24	static
+bme680_interface.c:399:6:sleep	16	static
+bme680_interface.c:412:9:get_timestamp_us	40	static
+bme680_interface.c:440:6:output_ready	40	static
+bme680_interface.c:480:10:state_load	16	static
+bme680_interface.c:507:6:state_save	16	static
+bme680_interface.c:528:10:config_load	16	static
